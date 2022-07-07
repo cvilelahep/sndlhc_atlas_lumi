@@ -15,7 +15,7 @@ ldb = pytimber.LoggingDB(source="nxcals")
 
 atlas_lumi = ldb.get('ATLAS:LUMI_TOT_INST', args.start_time, args.end_time, unixtime=False)
 
-f_out = f.open("sndlhc_atlas_lumi_{0}.csv".format(args.snd_lhc_run_number), "w")
+f_out = open("sndlhc_atlas_lumi_{0}.csv".format(args.snd_lhc_run_number), "w")
 f_out.write("Timestamp,Seconds since start of run,Instantaneous lumi (ub-1),Integrated lumi (nb-1)")
 integrated_lumi = 0.
 t0 = timestamp[0]
