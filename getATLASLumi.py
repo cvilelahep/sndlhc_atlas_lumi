@@ -31,7 +31,7 @@ for i in range(len(atlas_lumi)-1) :
 
     integrated_lumi += avg_lumi*delta_seconds/1e3
 
-    f_out.write("{0},{1:.3f},{2:.3f},{3:.3f}\n".format(str(timestamp[i+1]), delta_t0_seconds, avg_lumi, integrated_lumi))
+    f_out.write("{0},{1:.3f},{2:.3f},{3:.3f}\n".format(str(timestamp[i+1]), delta_t0_seconds, atlas_lumi[i+1], integrated_lumi))
 f_out.close()
 print("Integrated luminosity: {0:.1f} nb-1".format(integrated_lumi))
 
