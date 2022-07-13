@@ -3,17 +3,23 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
+import gc
 
 #import tol_colors as tc
 
 import ROOT
 
-plot_rate_runs = [0, 1]
+# Which runs have a reco file
+runs_with_reco = [0, 1, 2, 3, 4, 5, 6]
 
 rate_label = r"Single-track events with $|\theta_{\mathrm{I.P.}}| < 0.1 \, \mathrm{rad}$"
 rate_bin_width = 500 # in milliseconds
 
 logo_location = "/afs/cern.ch/user/c/cvilela/Large__SND_Logo_blue.png"
+
+converted_runs_location = "/eos/experiment/sndlhc/convertedData/commissioning/TI18/"
+reconstructed_runs_location = "/afs/cern.ch/work/c/cvilela/private/tempReco/"
+lumi_file = "/afs/cern.ch/user/c/cvilela/sndlhc_atlas_lumi/sndlhc_atlas_lumi_0000.csv"
 
 color_inst = 'navy'
 color_integrated = 'chocolate'
@@ -47,15 +53,22 @@ def draw_integrated(data, axis, color, mask = None) :
 
 def draw_sndlhcruns(data, axis) :
     y_range = axis.get_ylim()
+
+    max_run_length = np.timedelta64(0, "s")
+    for run in data :
+        if (run[2]-run[1]) > max_run_length :
+            max_run_length = run[2]-run[1]
     for run in data :
         axis.fill( [run[1], run[2], run[2], run[1]], [0., 0., y_range[1], y_range[1]], color = color_run_band, alpha = 0.1, edgecolor = None)
+        if (run[2] - run[1])*2.0 < max_run_length :
+            continue
         axis.text( run[1]+(run[2]-run[1])/2, y = 0.8*y_range[1], s = "Run\n{0}".format(run[0]), ha = 'center')
 
 def getMuonEvents(runNumber, run_start) :
     data = ROOT.TChain("rawConv")
-    data.Add("/afs/cern.ch/work/c/cvilela/private/tempReco/run_00{0}/sndsw_raw-0000.root".format(runNumber))
+    data.Add(converted_runs_location+"/run_00{0}/sndsw_raw-000[0-9].root".format(runNumber))
     reco = ROOT.TChain("rawConv")
-    reco.Add("/afs/cern.ch/work/c/cvilela/private/tempReco/run_00{0}/sndsw_raw-0000_muonReco.root".format(runNumber))
+    reco.Add(reconstructed_runs_location+"/run_00{0}/sndsw_raw-000[0-9]_muonReco.root".format(runNumber))
 
     ipMuon_timestamps = []
     for i_event in range(data.GetEntries()) :
@@ -74,7 +87,8 @@ def getMuonEvents(runNumber, run_start) :
         data.GetEntry(i_event)
 
         ipMuon_timestamps.append(run_start + np.timedelta64(int(data.EventHeader.GetEventTime()*6.25), "ns"))
-        
+    del data
+    del reco
     return ipMuon_timestamps
         
 def addLogo(fig) :
@@ -91,13 +105,12 @@ def addLogo(fig) :
     
 
 
-runs = np.genfromtxt('run_summary.csv', delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('end_time', 'datetime64[ms]')])
-lumi = np.genfromtxt('sndlhc_atlas_lumi_0000.csv', delimiter=',', skip_header=1, dtype=[('timestamp', 'datetime64[ms]'), ('seconds_since_start', 'f8'), ('inst_lumi', 'f4'), ('integrated_lumi', 'f4')])
+runs = np.genfromtxt('run_summary.csv', delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('end_time', 'datetime64[ms]'), ('reco_prescale_factor', int)])
+lumi = np.genfromtxt(lumi_file, delimiter=',', skip_header=1, dtype=[('timestamp', 'datetime64[ms]'), ('seconds_since_start', 'f8'), ('inst_lumi', 'f4'), ('integrated_lumi', 'f4')])
 
 badlumi = np.logical_and(lumi[:]['inst_lumi'] > 500, lumi[:]['timestamp'] < np.datetime64("2022-07-09 11:29:56.466000"))
 
 print(np.max(lumi[:]['inst_lumi']))
-
 
 fig_no_rate, ax_inst_no_rate = plt.subplots(figsize = (10, 5))
 addLogo(fig_no_rate)
@@ -114,8 +127,14 @@ fig_name = "sndlhc_lumi"
 plt.savefig(fig_name+".png", dpi=300)
 plt.savefig(fig_name+".pdf", dpi=300)
 
+plt.draw()
+plt.clf()
+plt.close("all")
+plt.close()
+gc.collect()
+print("Plotted no rate")
 
-if len(plot_rate_runs) :
+if len(runs_with_reco) :
     fig, (ax_inst, ax_murate) = plt.subplots(figsize = (10, 5), nrows = 2, sharex = True)
 
     addLogo(fig)
@@ -128,18 +147,19 @@ if len(plot_rate_runs) :
 
     plt.title("LHC Run 3")
 
-    for i_run in plot_rate_runs :
+    for i_run in runs_with_reco :
     
         nbins = int((runs[i_run][2]-runs[i_run][1])/np.timedelta64(rate_bin_width, 's'))
         bin_width = (runs[i_run][2]-runs[i_run][1])/np.timedelta64(1, 's')/nbins
 
         ip_muons = getMuonEvents(runs[i_run][0], runs[i_run][1])
 
-        n, bins, _ = ax_murate.hist(ip_muons, bins = nbins, range = (runs[i_run][1], runs[i_run][2]), histtype = "step", color = "black", weights = [1./bin_width]*len(ip_muons))
-        err = np.sqrt(n*bin_width)/bin_width
+        n, bins, _ = ax_murate.hist(ip_muons, bins = nbins, range = (runs[i_run][1], runs[i_run][2]), histtype = "step", color = "black", weights = [1.*runs[i_run]['reco_prescale_factor']/bin_width]*len(ip_muons))
+        err = np.sqrt(n*bin_width/runs[i_run]['reco_prescale_factor'])/bin_width*runs[i_run]['reco_prescale_factor']
         x = (bins[:-1] + bins[1:])/2
 
         ax_murate.errorbar(x, n, yerr = err, color = "black", fmt = 'none')
+        del ip_muons
 
     ax_murate.set_xlabel("Date")
     ax_murate.set_ylim((0, ax_murate.get_ylim()[1]*1.1))
@@ -151,12 +171,20 @@ if len(plot_rate_runs) :
     plt.savefig(fig_name+".png", dpi=300)
     plt.savefig(fig_name+".pdf", dpi=300)
 
-    proc_min = np.min(runs[plot_rate_runs]["start_time"])
-    proc_max = np.max(runs[plot_rate_runs]["end_time"])
+    plt.draw()
+    plt.clf()
+    plt.close("all")
+    plt.close()
+    gc.collect()
 
-    sub_intervals = [["proconly", plot_rate_runs, proc_min, proc_max]]
+    print("Plotted with rate")
+    
+    proc_min = np.min(runs[runs_with_reco]["start_time"])
+    proc_max = np.max(runs[runs_with_reco]["end_time"])
 
-    for i_run in plot_rate_runs :
+    sub_intervals = [["proconly", runs_with_reco, proc_min, proc_max]]
+
+    for i_run in runs_with_reco :
         sub_intervals.append([str(runs[i_run]["run_number"]), [i_run], runs[i_run]['start_time'], runs[i_run]['end_time']])
     
     for interval in sub_intervals :
@@ -182,10 +210,11 @@ if len(plot_rate_runs) :
             
             ip_muons = getMuonEvents(runs[i_run][0], runs[i_run][1])
 
-            n, bins, _ = ax_murate_proconly.hist(ip_muons, bins = nbins, range = (runs[i_run][1], runs[i_run][2]), histtype = "step", color = "black", weights = [1./bin_width]*len(ip_muons))
-            err = np.sqrt(n*bin_width)/bin_width
+            n, bins, _ = ax_murate_proconly.hist(ip_muons, bins = nbins, range = (runs[i_run][1], runs[i_run][2]), histtype = "step", color = "black", weights = [1.*runs[i_run]["reco_prescale_factor"]/bin_width]*len(ip_muons))
+            err = np.sqrt(n*bin_width/runs[i_run]["reco_prescale_factor"])/bin_width*runs[i_run]["reco_prescale_factor"]
             x = (bins[:-1] + bins[1:])/2
             ax_murate_proconly.errorbar(x, n, yerr = err, fmt = 'none', color = "black")
+            del ip_muons
             
         ax_murate_proconly.set_xlabel("Date")
         ax_murate_proconly.set_ylim((0, ax_murate_proconly.get_ylim()[1]*1.1))
@@ -194,5 +223,10 @@ if len(plot_rate_runs) :
         
         plt.savefig(fig_name+"_"+interval[0]+".png", dpi=300)
         plt.savefig(fig_name+"_"+interval[0]+".pdf", dpi=300)
-        
-plt.show()
+        print("Plotted with rate sub {0}".format(interval[0]))
+
+        plt.draw()
+        plt.clf()
+        plt.close("all")
+        plt.close()
+        gc.collect()
