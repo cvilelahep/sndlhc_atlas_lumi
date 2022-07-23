@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CONVERTED_DIR=/eos/experiment/sndlhc/convertedData/commissioning/TI18/
-TEMP_RECO_DIR=/afs/cern.ch/work/c/cvilela/private/tempReco/
+TEMP_RECO_DIR=/afs/cern.ch/work/c/cvilela/private/tempRecoJul18/
 
 SNDSW_SETUP=/cvmfs/sndlhc.cern.ch/SNDLHC-2022/June26/setUp.sh
 SNDSW_DIR=/eos/home-c/cvilela/SND_Jul10
