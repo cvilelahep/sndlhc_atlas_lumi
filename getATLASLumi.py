@@ -14,7 +14,7 @@ import pytimber
 
 ldb = pytimber.LoggingDB(source="nxcals")
 
-lumi_string = 'CMS:LUMI_TOT_INST'
+lumi_string = 'ATLAS:LUMI_TOT_INST'
 
 fetched_data = ldb.get(lumi_string, args.start_time, args.end_time, unixtime=False)
 timestamp = fetched_data[lumi_string][0]
