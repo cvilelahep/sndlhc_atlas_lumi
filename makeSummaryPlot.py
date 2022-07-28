@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 import csv
 import gc
 
-from memory_profiler import profile
+import lumi_tools
+
+#from memory_profiler import profile
 
 import ROOT
 
@@ -44,13 +46,19 @@ def recalc_integrated(data) :
 def draw_inst(data, axis, color, mask = None) :
     axis.set_ylabel('Instantaneous luminosity [$\mu$b$^{-1}$s$^{-1}$]', color=color)
     axis.tick_params(axis='y', labelcolor=color)
-    axis.plot(data[mask]['timestamp'], data[mask]['inst_lumi'], label = "Instantaneous luminosity", color = color)
+    if mask is not None :
+        axis.plot(data[mask]['timestamp'], data[mask]['inst_lumi'], label = "Instantaneous luminosity", color = color)
+    else :
+        axis.plot(data['timestamp'], data['inst_lumi'], label = "Instantaneous luminosity", color = color)
     axis.set_ylim(0, axis.get_ylim()[1]*1.2)
 
 
 def draw_integrated(data, axis, color, mask = None) :
     axis.set_ylabel('Integrated luminosity [pb$^{-1}$]', color=color)
-    axis.plot(data[mask]['timestamp'], recalc_integrated(data[mask]), label = "Integrated luminosity", color = color)
+    if mask is not None :
+        axis.plot(data[mask]['timestamp'], recalc_integrated(data[mask]), label = "Integrated luminosity", color = color)
+    else :
+        axis.plot(data['timestamp'], recalc_integrated(data), label = "Integrated luminosity", color = color)
     axis.tick_params(axis='y', labelcolor=color)
     axis.set_ylim(0, axis.get_ylim()[1]*1.2)
 
@@ -67,15 +75,13 @@ def draw_sndlhcruns(data, axis) :
             continue
         axis.text( run[1]+(run[2]-run[1])/2, y = 0.8*y_range[1], s = "Run\n{0}".format(run[0]), ha = 'center')
 
-@profile
+#@profile
 def getMuonEvents(runNumber, run_start) :
     data= ROOT.TChain("rawConv")
     data.SetAutoDelete(True)
     data.Add(converted_runs_location+"/run_00{0}/sndsw_raw-000[0-9].root".format(runNumber))
     reco = ROOT.TChain("rawConv")
     # Reco TChain leaks memory, for some reason
-
-    
     
     reco.SetAutoDelete(True)
     reco.Add(reconstructed_runs_location+"/run_00{0}/sndsw_raw-000[0-9]_muonReco.root".format(runNumber))
@@ -114,19 +120,16 @@ def addLogo(fig) :
         print("Error getting logo")
         pass
             
-def main() :
+def main(lumi_path, plot_rate = False) :
     runs = np.genfromtxt('run_summary.csv', delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('end_time', 'datetime64[ms]'), ('reco_prescale_factor', int)])
-    lumi = np.genfromtxt(lumi_file, delimiter=',', skip_header=1, dtype=[('timestamp', 'datetime64[ms]'), ('seconds_since_start', 'f8'), ('inst_lumi', 'f4'), ('integrated_lumi', 'f4')])
-    
-    badlumi = np.logical_and(lumi[:]['inst_lumi'] > 500, lumi[:]['timestamp'] < np.datetime64("2022-07-09 11:29:56.466000"))
-    
-    print(np.max(lumi[:]['inst_lumi']))
+
+    lumi = lumi_tools.getLumi(lumi_path)
     
     fig_no_rate, ax_inst_no_rate = plt.subplots(figsize = (10, 5))
     addLogo(fig_no_rate)
-    draw_inst(lumi, ax_inst_no_rate, color_inst, ~badlumi)
+    draw_inst(lumi, ax_inst_no_rate, color_inst)
     ax_integrated_no_rate = ax_inst_no_rate.twinx()
-    draw_integrated(lumi, ax_integrated_no_rate, color_integrated, ~badlumi)
+    draw_integrated(lumi, ax_integrated_no_rate, color_integrated)
     
     draw_sndlhcruns(runs, ax_inst_no_rate)
     
@@ -143,7 +146,9 @@ def main() :
     plt.close()
     gc.collect()
     print("Plotted no rate")
-    
+ 
+    if not plot_rate :
+        return
     
     if len(runs_with_reco) :
         fig, (ax_inst, ax_totrate) = plt.subplots(figsize = (10, 5), nrows = 2, sharex = True)
@@ -288,4 +293,11 @@ def main() :
             gc.collect()
 
 if __name__ == "__main__" :
-    main()
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--lumi_path", dest="lumi_path", help="Path to csv files containing ATLAS luminosity", required=True)
+    options = parser.parse_args()
+
+    
+
+    main(options.lumi_path)
