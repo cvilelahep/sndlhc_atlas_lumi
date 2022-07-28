@@ -14,9 +14,11 @@ import pytimber
 
 ldb = pytimber.LoggingDB(source="nxcals")
 
-fetched_data = ldb.get('ATLAS:LUMI_TOT_INST', args.start_time, args.end_time, unixtime=False)
-timestamp = fetched_data['ATLAS:LUMI_TOT_INST'][0]
-atlas_lumi = fetched_data['ATLAS:LUMI_TOT_INST'][1]
+lumi_string = 'ATLAS:LUMI_TOT_INST'
+
+fetched_data = ldb.get(lumi_string, args.start_time, args.end_time, unixtime=False)
+timestamp = fetched_data[lumi_string][0]
+atlas_lumi = fetched_data[lumi_string][1]
 
 f_out = open(args.output_directory+"/sndlhc_atlas_lumi_{0}.csv".format(args.snd_lhc_run_number), "w")
 f_out.write("Timestamp,Seconds since start of run,Instantaneous lumi (ub-1),Integrated lumi (nb-1)\n")
@@ -31,7 +33,7 @@ for i in range(len(atlas_lumi)-1) :
 
     integrated_lumi += avg_lumi*delta_seconds/1e3
 
-    f_out.write("{0},{1:.3f},{2:.3f},{3:.3f}\n".format(str(timestamp[i+1]), delta_t0_seconds, atlas_lumi[i+1], integrated_lumi))
+    f_out.write("{0},{1:.3f},{2:.3f},{3:.3f}\n".format(timestamp[i+1].isoformat(), delta_t0_seconds, avg_lumi, integrated_lumi))
 f_out.close()
 print("Integrated luminosity: {0:.1f} nb-1".format(integrated_lumi))
 
