@@ -17,7 +17,7 @@ ldb = pytimber.LoggingDB(source="nxcals")
 lumi_string = 'ATLAS:LUMI_TOT_INST'
 
 # For these plots, average the luminosity over 5 minutes
-fetched_data = ldb.getScaled(lumi_string, args.start_time, args.end_time, unixtime=True, scaleAlgorithm = "MEAN", scaleInterval = "MINUTE", scaleSize = "5")
+fetched_data = ldb.getScaled(lumi_string, args.start_time, args.end_time, unixtime=True, scaleAlgorithm = "MEAN", scaleInterval = "MINUTE", scaleSize = 5)
 
 timestamp = fetched_data[lumi_string][0]
 atlas_lumi = fetched_data[lumi_string][1]
