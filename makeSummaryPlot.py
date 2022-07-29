@@ -3,6 +3,7 @@ import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
+import glob
 import gc
 
 import lumi_tools
@@ -21,7 +22,6 @@ logo_location = "/afs/cern.ch/user/c/cvilela/Large__SND_Logo_blue.png"
 
 converted_runs_location = "/eos/experiment/sndlhc/convertedData/commissioning/TI18/"
 reconstructed_runs_location = "/afs/cern.ch/work/c/cvilela/private/tempRecoJul18/"
-lumi_file = "/afs/cern.ch/user/c/cvilela/sndlhc_atlas_lumi/sndlhc_atlas_lumi_0000.csv"
 
 color_inst = 'navy'
 color_integrated = 'chocolate'
@@ -64,14 +64,11 @@ def draw_integrated(data, axis, color, mask = None) :
 
 def draw_sndlhcruns(data, axis) :
     y_range = axis.get_ylim()
+    x_range = axis.get_xlim()
 
-    max_run_length = np.timedelta64(0, "s")
-    for run in data :
-        if (run[2]-run[1]) > max_run_length :
-            max_run_length = run[2]-run[1]
     for run in data :
         axis.fill( [run[1], run[2], run[2], run[1]], [0., 0., y_range[1], y_range[1]], color = color_run_band, alpha = 0.1, edgecolor = None)
-        if (run[2] - run[1])*2.0 < max_run_length :
+        if (run[2] - run[1])/np.timedelta64(1,"D")*10 < (x_range[1]-x_range[0]) :
             continue
         axis.text( run[1]+(run[2]-run[1])/2, y = 0.8*y_range[1], s = "Run\n{0}".format(run[0]), ha = 'center')
 
@@ -119,12 +116,8 @@ def addLogo(fig) :
     except :
         print("Error getting logo")
         pass
-            
-def main(lumi_path, plot_rate = False) :
-    runs = np.genfromtxt('run_summary.csv', delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('end_time', 'datetime64[ms]'), ('reco_prescale_factor', int)])
 
-    lumi = lumi_tools.getLumi(lumi_path)
-    
+def drawFigLumiOnly(lumi, runs, fig_name) :
     fig_no_rate, ax_inst_no_rate = plt.subplots(figsize = (10, 5))
     addLogo(fig_no_rate)
     draw_inst(lumi, ax_inst_no_rate, color_inst)
@@ -134,9 +127,7 @@ def main(lumi_path, plot_rate = False) :
     draw_sndlhcruns(runs, ax_inst_no_rate)
     
     ax_inst_no_rate.set_title("LHC Run 3")
-    
-    fig_name = "sndlhc_lumi"
-    
+        
     plt.savefig(fig_name+".png", dpi=300)
     plt.savefig(fig_name+".pdf", dpi=300)
     
@@ -145,8 +136,70 @@ def main(lumi_path, plot_rate = False) :
     plt.close("all")
     plt.close()
     gc.collect()
-    print("Plotted no rate")
- 
+
+def drawFigLumiAndRate(lumi, runs, fig_name) :
+    fig, (ax_inst, ax_totrate) = plt.subplots(figsize = (10, 5), nrows = 2, sharex = True)
+
+    addLogo(fig)
+    draw_inst(lumi, ax_inst, color_inst)
+    ax_integrated = ax_inst.twinx()
+    draw_integrated(lumi, ax_integrated, color_integrated)
+    
+    draw_sndlhcruns(runs, ax_inst)
+    
+    ax_inst.set_title("LHC Run 3")
+    
+    for this_i_run, run in enumerate(runs) :
+        timestamps = []
+
+        files = glob.glob(converted_runs_location+"/run_{0:06d}/sndsw_raw-*.root".format(run[0]))
+
+        data= ROOT.TChain("rawConv")
+        data.SetAutoDelete(True)
+
+        for f in files :
+            data.Add(f)
+            for event in data :
+                timestamps.append(run[1] + np.timedelta64(int(event.EventHeader.GetEventTime()*6.25), "ns"))
+        del data
+
+        nbins = int((run[2]-run[1])/np.timedelta64(rate_bin_width, 's'))
+        bin_width = (run[2]-run[1])/np.timedelta64(1, 's')/nbins
+
+        if this_i_run :
+            n, bins, _ = ax_totrate.hist(timestamps, bins = nbins, range = (run[1], run[2]), histtype = "step", color = total_rate_color, weights = [1./bin_width]*len(timestamps))
+        else :
+            n, bins, _ = ax_totrate.hist(timestamps, bins = nbins, range = (run[1], run[2]), histtype = "step", color = total_rate_color, weights = [1./bin_width]*len(timestamps), label = "All events")     
+        err = np.sqrt(n*bin_width)/bin_width
+        x = (bins[:-1] + bins[1:])/2
+        ax_totrate.errorbar(x, n, yerr = err, color = total_rate_color, fmt = 'none')
+
+        if not this_i_run :
+            ax_totrate.legend(loc = 'upper left')
+
+    plt.savefig(fig_name+".png", dpi=300)
+    plt.savefig(fig_name+".pdf", dpi=300)
+    
+    plt.draw()
+    plt.clf()
+    plt.close("all")
+    plt.close()
+    gc.collect()
+
+def main(lumi_path, plot_rate = False) :
+    runs = np.genfromtxt('run_summary.csv', delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('end_time', 'datetime64[ms]'), ('reco_prescale_factor', int)])
+    lumi = lumi_tools.getLumi(lumi_path)
+    
+    drawFigLumiOnly(lumi, runs, "sndlhc_lumi_all")
+    print("Drew lumi-only all")
+#    drawFigLumiAndRate(lumi, runs, "sndlhc_lumi_rate_all")
+#    print("Drew lumi and rate all")
+
+    for run in runs :
+        run_lumi_mask = np.logical_and(lumi['timestamp'] > run[1], lumi['timestamp'] < run[2])
+        drawFigLumiOnly(lumi[run_lumi_mask], [run], "sndlhc_lumi_run{0:03d}".format(run[0]))
+        print("Drew lumi-only {0}".format(run[0]))
+
     if not plot_rate :
         return
     
@@ -296,6 +349,7 @@ if __name__ == "__main__" :
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--lumi_path", dest="lumi_path", help="Path to csv files containing ATLAS luminosity", required=True)
+    parser.add_argument("--conv_path", dest="conv_path", help="Path to converted data files", default = "")
     options = parser.parse_args()
 
     
