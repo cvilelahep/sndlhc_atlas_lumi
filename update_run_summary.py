@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import shutil
 import argparse
 import json
 import datetime
@@ -18,7 +19,12 @@ options = parser.parse_args()
 lumi = lumi_tools.getLumi(options.lumi_path)
 
 # Now get the existing run list
-runs = np.genfromtxt('run_summary.csv', delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('end_time', 'datetime64[ms]'), ('reco_prescale_factor', int)])
+if not os.path.isfile(options.run_summary_file) :
+    # Initialize run summary file with committed copy (contains runs before automatic timestamp became available)
+    script_dir = os.path.dirname(__file__)
+    shutil.copy(script_dir+"/run_summary.csv.in", options.run_summary_file)
+
+runs = np.genfromtxt(options.run_summary_file, delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('end_time', 'datetime64[ms]'), ('reco_prescale_factor', int)])
 
 # Get the last run
 last_run = runs[-1]['run_number']
@@ -58,6 +64,4 @@ for i_run in to_check :
 with open("run_summary.csv", "a") as f_out :
     for line in lines_to_write :
         f_out.write(line+"\n")
-
-
-
+        
