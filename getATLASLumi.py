@@ -17,23 +17,11 @@ ldb = pytimber.LoggingDB(source="nxcals")
 
 lumi_string = 'ATLAS:LUMI_TOT_INST'
 
-# For these plots, average the luminosity over 5 minutes
-print(args.start_time)
-print(args.end_time)
-fetched_data = ldb.getScaled(lumi_string, args.start_time, args.end_time, unixtime=True, scaleAlgorithm = 'AVG', scaleInterval = 'MINUTE', scaleSize = '5')
-
+# getScaled doesn't seem to work.
+#fetched_data = ldb.getScaled(lumi_string, args.start_time, args.end_time, unixtime=True, scaleAlgorithm = 'AVG', scaleInterval = 'MINUTE', scaleSize = '5')
+fetched_data = ldb.getScaled(lumi_string, args.start_time, args.end_time, unixtime=True)
 timestamp = np.array(fetched_data[lumi_string][0])
 atlas_lumi = np.array(fetched_data[lumi_string][1])
-
-# Sometimes average gives None: mask these out
-mask = atlas_lumi == None
-timestamp = timestamp[mask]
-atlas_lumi = atlas_lumi[mask]
-
-print(timestamp)
-print(atlas_lumi)
-print(len(timestamp))
-print(len(atlas_lumi))
 
 f_out = open(args.output_directory+"/sndlhc_atlas_lumi_{0}.csv".format(args.snd_lhc_run_number), "w")
 f_out.write("Timestamp,Seconds since start of run,Instantaneous lumi (ub-1)\n")
