@@ -1,10 +1,8 @@
 import numpy as np
 import os
-import shutil
 import argparse
 import json
 import datetime
-import ROOT
 import lumi_tools
 
 converted_data_dir = "/eos/experiment/sndlhc/convertedData/commissioning/TI18/"
@@ -19,10 +17,10 @@ options = parser.parse_args()
 lumi = lumi_tools.getLumi(options.lumi_path)
 
 # Now get the existing run list
-if not os.path.isfile(options.run_summary_file) :
-    # Initialize run summary file with committed copy (contains runs before automatic timestamp became available)
-    script_dir = os.path.dirname(__file__)
-    shutil.copy(script_dir+"/run_summary.csv.in", options.run_summary_file)
+#if not os.path.isfile(options.run_summary_file) :
+#    # Initialize run summary file with committed copy (contains runs before automatic timestamp became available)
+#    script_dir = os.path.dirname(__file__)
+#    shutil.copy(script_dir+"/run_summary.csv.in", options.run_summary_file)
 
 runs = np.genfromtxt(options.run_summary_file, delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('end_time', 'datetime64[ms]'), ('reco_prescale_factor', int)])
 
