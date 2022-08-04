@@ -14,16 +14,11 @@ if [[ -z $latest_lumi_file ]];
 then
 	start_date=$first
 else
-	lumi_f_name=`basename $latest_lumi_file .csv`
-	lumi_f_date=`echo $lumi_f_name | awk -F'[_]' '{print $4}'`
-	lumi_f_year=${lumi_f_date:0:4}
-	lumi_f_month=${lumi_f_date:4:2}
-	lumi_f_day=${lumi_f_date:6:2}
-	lumi_f_time=`echo $lumi_f_name | awk -F'[_]' '{print $5}'`
-	lumi_f_hour=${lumi_f_time:0:2}
-	lumi_f_min=${lumi_f_time:2:2}
-	lumi_f_sec=${lumi_f_time:4:2}
-	start_date="${lumi_f_year}-${lumi_f_month}-${lumi_f_day} ${lumi_f_hour}:${lumi_f_min}:${lumi_f_sec}"
+   
+        datetime=`tail -n1 $latest_lumi_file | awk -F'[,]' '{print $1}'`
+	date=`echo $datetime | awk -F'[T]' '{print $1}`
+	time=`echo $datetime | awk -F'[T]' '{print $2}`
+	start_date="${date} ${time}"
 fi
 
 echo Requesting lumi from $start_date to $now
