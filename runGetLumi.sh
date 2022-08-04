@@ -7,7 +7,7 @@ first=`head -n1 ${SCRIPT_DIR}/run_summary.csv.in | awk -F'[,]' '{print $2}'`
 now=`date +"%Y-%m-%d %H:%M:%S"`
 
 k5start -f ~/.Authentication/cvilela.kt -u cvilela
-latest_lumi_file=`ls -rt ${LUMI_WORK_DIR}/sndlhc_atlas_lumi_*.csv | tail -n 1`
+latest_lumi_file=`ls -rt ${LUMI_WORK_DIR}/sndlhc_atlas_lumi_*.csv 2> /dev/null | tail -n 1`
 kdestroy -p cvilela@CERN.CH
 
 if [[ -z $latest_lumi_file ]];
