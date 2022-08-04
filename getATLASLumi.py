@@ -41,12 +41,11 @@ for i in range(len(atlas_lumi)-1) :
     date = datetime.datetime.utcfromtimestamp(timestamp[i+1])
     f_out.write("{0},{1:.3f},{2:.3f}\n".format(date.isoformat(), delta_t0, avg_lumi))
 f_out.close()
-print("Integrated luminosity: {0:.1f} nb-1".format(integrated_lumi))
 
 if args.generate_plot :
     import matplotlib.pyplot as plt
     plt.plot(timestamp, atlas_lumi)
-    plt.title("{0} to {1}: {2:.1f} nb-1".format(args.start_time, args.end_time, integrated_lumi))
+    plt.title("{0} to {1}".format(args.start_time, args.end_time))
     plt.xlabel("Time")
     plt.ylabel("Instantaneous luminosity [ub-1]")
 
