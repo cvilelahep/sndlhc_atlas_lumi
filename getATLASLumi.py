@@ -34,12 +34,11 @@ if len(timestamp) < 2 :
 
 f_out = open(args.output_directory+"/sndlhc_atlas_lumi_{0}.csv".format(args.snd_lhc_run_number), "w")
 f_out.write("Timestamp,Seconds since start of run,Instantaneous lumi (ub-1)\n")
-t0 = timestamp[0]
-for i in range(len(atlas_lumi)-1) :
-    delta_t0 = timestamp[i+1]-t0
-    avg_lumi = (atlas_lumi[i] + atlas_lumi[i+1])/2
-    date = datetime.datetime.utcfromtimestamp(timestamp[i+1])
-    f_out.write("{0},{1:.3f},{2:.3f}\n".format(date.isoformat(), delta_t0, avg_lumi))
+
+for i in range(len(atlas_lumi)) :
+    inst_lumi = atlas_lumi[i]
+    date = datetime.datetime.utcfromtimestamp(timestamp[i])
+    f_out.write("{0},{1:.3f}\n".format(date.isoformat(), inst_lumi))
 f_out.close()
 
 if args.generate_plot :
