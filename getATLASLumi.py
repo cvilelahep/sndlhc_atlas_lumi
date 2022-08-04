@@ -39,7 +39,7 @@ for i in range(len(atlas_lumi)-1) :
     delta_t0 = timestamp[i+1]-t0
     avg_lumi = (atlas_lumi[i] + atlas_lumi[i+1])/2
     date = datetime.datetime.utcfromtimestamp(timestamp[i+1])
-    f_out.write("{0},{1:.3f},{2:.3f}\n".format(date.isoformat(), delta_t0_seconds, avg_lumi))
+    f_out.write("{0},{1:.3f},{2:.3f}\n".format(date.isoformat(), delta_t0, avg_lumi))
 f_out.close()
 print("Integrated luminosity: {0:.1f} nb-1".format(integrated_lumi))
 
