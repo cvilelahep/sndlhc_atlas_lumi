@@ -13,9 +13,9 @@ if [[ -z $latest_lumi_file ]];
 then
 	start_date=$first
 else
-        datetime=`tail -n1 $latest_lumi_file | awk -F'[,]' '{print $1}'`   
-	date=`echo $datetime | awk -F'[T]' '{print $1}`
-	time=`echo $datetime | awk -F'[T]' '{print $2}`
+        datetime=`tail -n1 $latest_lumi_file | awk -F'[,]' '{print $1}'`
+	date=`echo $datetime | awk -F'[T]' '{print $1}'`
+	time=`echo $datetime | awk -F'[T]' '{print $2}'`
 	start_date="${date} ${time}"
 fi
 
