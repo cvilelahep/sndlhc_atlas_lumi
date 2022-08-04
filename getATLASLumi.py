@@ -29,7 +29,7 @@ mask = atlas_lumi == None
 timestamp = timestamp[~mask]
 atlas_lumi = atlas_lumi[~mask]
 
-if len(timestamp) == 0 :
+if len(timestamp) < 2 :
     exit()
 
 f_out = open(args.output_directory+"/sndlhc_atlas_lumi_{0}.csv".format(args.snd_lhc_run_number), "w")
