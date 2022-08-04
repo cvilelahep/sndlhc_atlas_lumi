@@ -23,6 +23,11 @@ fetched_data = ldb.getScaled(lumi_string, args.start_time, args.end_time, unixti
 timestamp = np.array(fetched_data[lumi_string][0])
 atlas_lumi = np.array(fetched_data[lumi_string][1])
 
+# Sometimes there are "None" entries in the luminosity
+mask = atlas_lumi == None
+timestamp = timestamp[mask]
+atlas_lumi = atlas_lumi[mask]
+
 if len(timestamp) == 0 :
     exit()
 
