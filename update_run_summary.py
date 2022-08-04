@@ -22,7 +22,7 @@ lumi = lumi_tools.getLumi(options.lumi_path)
 #    script_dir = os.path.dirname(__file__)
 #    shutil.copy(script_dir+"/run_summary.csv.in", options.run_summary_file)
 
-runs = np.genfromtxt(options.run_summary_file, delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('end_time', 'datetime64[ms]'), ('reco_prescale_factor', int)])
+runs = np.genfromtxt(options.run_summary_file, delimiter=',', dtype=[('run_number', 'i4'), ('start_time', 'datetime64[ms]'), ('stop_time', 'datetime64[ms]'), ('reco_prescale_factor', int)])
 
 # Get the last run
 last_run = runs[-1]['run_number']
