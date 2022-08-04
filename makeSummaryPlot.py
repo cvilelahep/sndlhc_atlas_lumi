@@ -150,6 +150,7 @@ def drawFigLumiAndRate(lumi, runs, fig_name) :
     ax_inst.set_title("LHC Run 3")
     
     for this_i_run, run in enumerate(runs) :
+        print("Getting rate for run {0}".format(run))
         timestamps = []
 
         files = glob.glob(converted_runs_location+"/run_{0:06d}/sndsw_raw-*.root".format(run[0]))
@@ -192,13 +193,15 @@ def main(lumi_path, plot_rate = False) :
     
     drawFigLumiOnly(lumi, runs, "sndlhc_lumi_all")
     print("Drew lumi-only all")
-#    drawFigLumiAndRate(lumi, runs, "sndlhc_lumi_rate_all")
-#    print("Drew lumi and rate all")
+    drawFigLumiAndRate(lumi, runs, "sndlhc_lumi_rate_all")
+    print("Drew lumi and rate all")
 
     for run in runs :
         run_lumi_mask = np.logical_and(lumi['timestamp'] > run[1], lumi['timestamp'] < run[2])
         drawFigLumiOnly(lumi[run_lumi_mask], [run], "sndlhc_lumi_run{0:03d}".format(run[0]))
         print("Drew lumi-only {0}".format(run[0]))
+        drawFigLumiAndRate(lumi, runs, "sndlhc_lumi_rate_run{0:03d}".format(run[0]))
+        print("Drew lumi and rate {0}".format(run[0]))
 
     if not plot_rate :
         return
