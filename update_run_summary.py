@@ -39,6 +39,7 @@ lines_to_write = []
 for i_run in to_check :
     with open(raw_data_dir+"/run_{0:06d}/run_timestamps.json".format(i_run)) as f_runtimes :
         runtimes = json.load(f_runtimes)
+        print(runtimes)
         start_time = np.datetime64(runtimes['start_time'])
         stop_time = np.datetime64(runtimes['stop_time'])
 
