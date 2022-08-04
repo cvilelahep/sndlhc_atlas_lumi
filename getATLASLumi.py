@@ -23,6 +23,9 @@ fetched_data = ldb.getScaled(lumi_string, args.start_time, args.end_time, unixti
 timestamp = np.array(fetched_data[lumi_string][0])
 atlas_lumi = np.array(fetched_data[lumi_string][1])
 
+if len(timestamp) == 0 :
+    exit()
+
 f_out = open(args.output_directory+"/sndlhc_atlas_lumi_{0}.csv".format(args.snd_lhc_run_number), "w")
 f_out.write("Timestamp,Seconds since start of run,Instantaneous lumi (ub-1)\n")
 t0 = timestamp[0]
