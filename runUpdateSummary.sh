@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-if [[ -z run_summary.csv ]]
+if [[ ! -f "run_summary.csv" ]]
 then
     cp run_summary.csv.in run_summary.csv
 fi
