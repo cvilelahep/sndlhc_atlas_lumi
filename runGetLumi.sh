@@ -8,18 +8,18 @@ now=`date +"%Y-%m-%d %H:%M:%S"`
 
 k5start -f ~/.Authentication/cvilela.kt -u cvilela
 latest_lumi_file=`ls -rt ${LUMI_WORK_DIR}/sndlhc_atlas_lumi_*.csv 2> /dev/null | tail -n 1`
-kdestroy -p cvilela@CERN.CH
 
 if [[ -z $latest_lumi_file ]];
 then
 	start_date=$first
 else
-   
-        datetime=`tail -n1 $latest_lumi_file | awk -F'[,]' '{print $1}'`
+        datetime=`tail -n1 $latest_lumi_file | awk -F'[,]' '{print $1}'`   
 	date=`echo $datetime | awk -F'[T]' '{print $1}`
 	time=`echo $datetime | awk -F'[T]' '{print $2}`
 	start_date="${date} ${time}"
 fi
+
+kdestroy -p cvilela@CERN.CH
 
 echo Requesting lumi from $start_date to $now
 
