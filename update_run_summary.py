@@ -39,9 +39,12 @@ lines_to_write = []
 for i_run in to_check :
     with open(raw_data_dir+"/run_{0:06d}/run_timestamps.json".format(i_run)) as f_runtimes :
         runtimes = json.load(f_runtimes)
-        print(runtimes)
-        start_time = np.datetime64(runtimes['start_time'])
-        stop_time = np.datetime64(runtimes['stop_time'])
+        try :
+            start_time = np.datetime64(runtimes['start_time'])
+            stop_time = np.datetime64(runtimes['stop_time'])
+        except KeyError :
+            print("WARNING! Incomplete time information for run {0}. Skipping...".format(i_run))
+            continue
 
         mask = np.logical_and(lumi['timestamp']>start_time, lumi['timestamp'] < stop_time)
         # Skip if no entries in nxcals for the run duration
