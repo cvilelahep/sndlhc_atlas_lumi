@@ -161,7 +161,7 @@ def drawFigLumiAndRate(lumi, runs, fig_name) :
         for f in files :
             data.Add(f)
         
-        for i_event in range(int(len(data)/run[3])) :
+        for i_event in range(int(data.GetEntries()/run[3])) :
             data.GetEntry(i_event*run[3])
             timestamps.append(run[1] + np.timedelta64(int(data.EventHeader.GetEventTime()*6.25), "ns"))
         del data
