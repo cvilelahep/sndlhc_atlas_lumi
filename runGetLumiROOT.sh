@@ -13,15 +13,15 @@ else
 fi
 
 stop_time=`jq -r ".stop_time" $timestamp_file`
+#if stop_time == "null";
+#then
+
 if [[ stop_time == *"Z"* ]];
 then
     stop_time=`date +'%Y-%m-%d %H:%M:%S' -d $stop_time`
 else 
     stop_time=`date +'%Y-%m-%d %H:%M:%S' -d "TZ=\"CEST\" ${stop_time}"`
 fi
-
-#if stop_time == "null";
-#then
 
 mkdir -p $out_dir
 
