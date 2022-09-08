@@ -2,6 +2,7 @@ import argparse
 import array
 import ROOT
 
+import numpy as np
 import time
 import datetime
 
@@ -25,10 +26,11 @@ for variable in args.nxcals_variables :
     
     fetched_data = ldb.get(variable, args.start_time, args.end_time, unixtime=True)
 
-    if len(fetched_data[variable][0]) < 2 :
+    if len(fetched_data[variable][0]) < 1 :
+        print("No data. Skipping {0}".format(variable))
         continue
 
-    if fetched_data[variable][1].dtype == '<U8' or fetched_data[variable][1].dtype == '<U10' :
+    if 'str' in fetched_data[variable][1].dtype.name :
         data_is_string = True
     else :
         data_is_string = False

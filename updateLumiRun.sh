@@ -3,7 +3,7 @@
 RAW_DATA_DIR=/eos/experiment/sndlhc/raw_data/commissioning/TI18/data/
 LUMI_DIR=/eos/user/c/cvilela/lumi_test/
 
-MAX_FILES=10
+MAX_FILES=500
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
@@ -87,7 +87,7 @@ EOF`
 
 		k5start -f ~/.Authentication/cristova.kt -u cristova
 		python3 -u getLumiROOT.py -o temp/${last_run} "$start_time" "$stop_time" --nxcals_variables ATLAS:LUMI_TOT_INST ATLAS.OFFLINE:LUMI_TOT_INST CMS:LUMI_TOT_INST CMS.OFFLINE:LUMI_TOT_INST LHCB:LUMI_TOT_INST ALICE:LUMI_TOT_INST LHC.BRAND.1R:LuminosityBunchSum:totalLuminosityBunchSum LHC.BRANA.4L1:TOTAL_LUMINOSITY HX:BETASTAR_IP1 LHC.BRANA.4L1:LUMINOSITY_Q1 LHC.BRANA.4L1:LUMINOSITY_Q2 LHC.BRANA.4L1:LUMINOSITY_Q3 LHC.BRANA.4L1:LUMINOSITY_Q4 HX:BMODE LHC.LUMISERVER:AutomaticScanIP1:Nominal_Separation LHC.LUMISERVER:AutomaticScanIP1:Nominal_Separation_Plane 2>&1 | tee -a $LOG_FILE_NAME
-		echo $?
+		
 		kdestroy -p cristova@CERN.CH
 
 		k5start -f ~/.Authentication/cvilela.kt -u cvilela
