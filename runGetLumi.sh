@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-LUMI_WORK_DIR=/eos/user/c/cvilela/sndlumi_2
+LUMI_WORK_DIR=/eos/experiment/sndlhc/luminosity_fixed/
 
 first=`head -n1 ${SCRIPT_DIR}/run_summary.csv.in | awk -F'[,]' '{print $2}'`
 now=`date -u +"%Y-%m-%d %H:%M:%S"`
