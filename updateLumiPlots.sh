@@ -26,8 +26,7 @@ do
 	if [[ ! " ${PROCESSED_RUNS[*]} " =~ " ${last_run} " ]]; then
 
                 echo `date` PROCESSING ${last_run}  2>&1 | tee -a $LOG_FILE_NAME
- python3 makeSummaryPlotsROOT.py --raw_data_dir /eos/experiment/sndlhc/raw_data/commissioning/TI18/data/run_004626/ --lumi_dir /eos/user/c/cvilela/lumi_test/run_004626/
-		python3 -u --raw_data_dir ${RAW_DATA_DIR}/$last_run --lumi_dir ${LUMI_DIR}/$last_run --output_file ${PLOTS_DIR}/${last_run}.root
+		python3 -u makeSummaryPlotsROOT.py --raw_data_dir ${RAW_DATA_DIR}/$last_run --lumi_dir ${LUMI_DIR}/$last_run --output_file ${PLOTS_DIR}/${last_run}.root
 		echo `date` END ${last_run}  2>&1 | tee -a $LOG_FILE_NAME
 	fi
 done
