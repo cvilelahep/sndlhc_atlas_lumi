@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description='Luminosity summary plots for SND@L
 
 parser.add_argument("--raw_data_dir", type = str, help="Raw data directory", required = True)
 parser.add_argument("--lumi_dir", type = str, help="Luminosity directory", required = True)
-parser.add_argument("-o", "--output_dir", type = str, help="Directory to store the output ROOT files", default="./")
+parser.add_argument("-o", "--output_file", type = str, help="Output ROOT file name", default="./lumi_plots.root")
 
 args = parser.parse_args()
 
@@ -44,16 +44,16 @@ for f in data_files :
     events.Add(f)
 
 events.GetEntry(events.GetEntries()-1)
-last_time = getattr(events, branch_name)*6.25/1e9
+last_time = getattr(events, branch_name)*1/0.160316/1e9
 
 n_bins = int(last_time/BIN_WIDTH)+1
 
-out_file = ROOT.TFile(args.output_dir+"/lumi_plots.root", "RECREATE")
+out_file = ROOT.TFile(args.output_file, "RECREATE")
 
 out_file.mkdir("Histograms")
 out_file.cd("/Histograms")
 
-events.Draw(branch_name+"*6.25/1e9>>h_event_rate("+str(n_bins)+", 0, "+str(n_bins*BIN_WIDTH)+")", "1./"+str(BIN_WIDTH), "goff")
+events.Draw(branch_name+"*1/0.160316/1e9>>h_event_rate("+str(n_bins)+", 0, "+str(n_bins*BIN_WIDTH)+")", "1./"+str(BIN_WIDTH), "goff")
 h_event_rate = ROOT.gDirectory.Get("h_event_rate")
 h_event_rate.SetTitle(";Run time [s];Event rate [s^{-1}]")
 h_event_rate.Write()
@@ -145,7 +145,7 @@ for c_name, data_list in [["evt_rate_ATLAS_lumi_summary", ATLAS_lumi_summary],
     canvi_ratios.append(ROOT.TCanvas(c_name+"_ratios"))
     h_base = h_event_rate.Clone("h_base")
     h_base.Reset()
-    h_base.SetMaximum(LUMI_SCALE*2)
+    h_base.SetMaximum(LUMI_SCALE*3.)
     h_base.SetTitle(";Run time [s];Instantaneous luminosity / event rate [#mub]")
     h_base.Draw("HIST")
 
