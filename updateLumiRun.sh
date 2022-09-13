@@ -3,7 +3,7 @@
 RAW_DATA_DIR=/eos/experiment/sndlhc/raw_data/commissioning/TI18/data/
 LUMI_DIR=/eos/user/c/cvilela/lumi_test/
 
-MAX_FILES=500
+MAX_FILES=100
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
@@ -13,9 +13,8 @@ LOG_FILE_NAME=${LOG_DIR}/updateLumi_`date +'%Y%m%d'`.log
 
 k5start -f ~/.Authentication/cvilela.kt -u cvilela
 
-LAST_RUNS=(`ls -rt ${RAW_DATA_DIR} | tail -n${MAX_FILES}`)
-
-PROCESSED_RUNS=(`ls -rt ${LUMI_DIR} | tail -n${MAX_FILES}`)
+LAST_RUNS=($( basename -a `ls -rtd ${RAW_DATA_DIR}/run* | tail -n${MAX_FILES}`) )
+PROCESSED_RUNS=($( basename -a `ls -rtd ${LUMI_DIR}/run* | tail -n${MAX_FILES}`) )
 
 source /cvmfs/sndlhc.cern.ch/SNDLHC-2022/July14/setUp.sh
 
@@ -23,6 +22,8 @@ for last_run in ${LAST_RUNS[@]}
 do
 	# If this run hasn't been processed yet, process it.
 	if [[ ! " ${PROCESSED_RUNS[*]} " =~ " ${last_run} " ]]; then
+
+		echo $last_run
 
 		timestamp_file=${RAW_DATA_DIR}/${last_run}/run_timestamps.json
 
