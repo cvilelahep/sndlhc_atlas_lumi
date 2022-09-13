@@ -74,14 +74,13 @@ other_lumi_summary = [["ALICE.LUMI_TOT_INST", "ALICE", ROOT.kOrange+1],
 
 beam_mode_strings = []
 beam_mode_times = []
-
-f_beam_modes = ROOT.TFile(args.lumi_dir+"/HX.BMODE.root")
-for entry in f_beam_modes.sndlhc_lumi :
-    beam_mode_strings.append(str(entry.var))
-    beam_mode_times.append(entry.run_time)
-
-print(beam_mode_strings)
-print(beam_mode_times)
+try :
+    f_beam_modes = ROOT.TFile(args.lumi_dir+"/HX.BMODE.root")
+    for entry in f_beam_modes.sndlhc_lumi :
+        beam_mode_strings.append(str(entry.var))
+        beam_mode_times.append(entry.run_time)
+except OSError :
+    print("No beam mode entries for this run")
 
 canvi = []
 canvi_log = []
@@ -158,6 +157,9 @@ for c_name, data_list in [["evt_rate_ATLAS_lumi_summary", ATLAS_lumi_summary],
         if os.path.exists(args.lumi_dir+"/"+l[0]+".root") :
             f_lumi = ROOT.TFile(args.lumi_dir+"/"+l[0]+".root")
         
+            if f_lumi.sndlhc_lumi.GetEntries() < 2 :
+                continue
+
             out_file.cd("/Histograms")
             
             if f_lumi.sndlhc_lumi.GetEntries() > 2*n_bins :
