@@ -34,6 +34,11 @@ for variable in args.nxcals_variables :
         data_is_string = True
     else :
         data_is_string = False
+        try :
+            array_length = len(fetched_data[variable][1][0])
+        except TypeError :
+            array_length = 1
+
 
     out_file = ROOT.TFile(args.output_dir+"/"+variable.replace(":", ".")+".root", "RECREATE")
     out_tree = ROOT.TTree("sndlhc_lumi", "NXCALS Luminosity for SND@LHC")
@@ -41,8 +46,11 @@ for variable in args.nxcals_variables :
     unix_timestamp = array.array('d', [0.])
     out_tree.Branch("unix_timestamp", unix_timestamp, "unix_timestamp/D")
     if not data_is_string :
-        var = array.array('d', [0.])
-        out_tree.Branch("var", var, "var/D")
+        var = array.array('d', [0.]*array_length)
+        if array_length > 1 :
+            out_tree.Branch("var", var, "var["+str(array_length)+"]/D")
+        else :
+            out_tree.Branch("var", var, "var/D")
     else :
         var = ROOT.std.string()
         out_tree.Branch("var", var)
