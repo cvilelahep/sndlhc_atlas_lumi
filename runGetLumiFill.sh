@@ -6,4 +6,4 @@ LOG_DIR=${SCRIPT_DIR}/Logs/
 
 LOG_FILE_NAME=${LOG_DIR}/get_nxcals_data_`date +'%Y%m%d'`.log
 
-python3 /eos/user/c/cvilela/nxcals_data  2>&1 | tee -a $LOG_FILE_NAME
+python3 getLumiFill.py -o /eos/user/c/cvilela/nxcals_data 2>&1 | tee -a $LOG_FILE_NAME
