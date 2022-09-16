@@ -1,9 +1,9 @@
 #!/bin/bash
 
 RAW_DATA_DIR=/eos/experiment/sndlhc/raw_data/commissioning/TI18/data/
-LUMI_DIR=/eos/user/c/cvilela/lumi_test/
+LUMI_DIR=/eos/user/c/cvilela/lumi_test_1/
 
-MAX_FILES=100
+MAX_FILES=1000
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
@@ -87,8 +87,9 @@ EOF`
 		mkdir -p temp/${last_run}
 
 		k5start -f ~/.Authentication/cristova.kt -u cristova
-		python3 -u getLumiROOT.py -o temp/${last_run} "$start_time" "$stop_time" --nxcals_variables ATLAS:LUMI_TOT_INST ATLAS.OFFLINE:LUMI_TOT_INST CMS:LUMI_TOT_INST CMS.OFFLINE:LUMI_TOT_INST LHCB:LUMI_TOT_INST ALICE:LUMI_TOT_INST LHC.BRAND.1R:LuminosityBunchSum:totalLuminosityBunchSum LHC.BRANA.4L1:TOTAL_LUMINOSITY HX:BETASTAR_IP1 LHC.BRANA.4L1:LUMINOSITY_Q1 LHC.BRANA.4L1:LUMINOSITY_Q2 LHC.BRANA.4L1:LUMINOSITY_Q3 LHC.BRANA.4L1:LUMINOSITY_Q4 HX:BMODE LHC.LUMISERVER:AutomaticScanIP1:Beam LHC.LUMISERVER:AutomaticScanIP1:Active LHC.LUMISERVER:AutomaticScanIP1:Nominal_Separation LHC.LUMISERVER:AutomaticScanIP1:Nominal_Separation_Plane LHC.LUMISERVER:AutomaticScanIP1:Read_Nominal_Displacement_B1_sepPlane LHC.LUMISERVER:AutomaticScanIP1:Read_Nominal_Displacement_B1_xingPlane LHC.LUMISERVER:AutomaticScanIP1:Read_Nominal_Displacement_B2_sepPlane LHC.LUMISERVER:AutomaticScanIP1:Read_Nominal_Displacement_B2_xingPlane LHC.COLLISIONS.SCHEME:HO_collisions:HO_coll_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B2:LR_encounters_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B2:HO_partner_collisions_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B2:filled_bunches LHC.COLLISIONS.SCHEME:collisions_partners_B1:LR_encounters_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B1:HO_partner_collisions_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B1:filled_bunches LHC.STATS:LHC:INJECTION_SCHEME LHC.STATS:FILLING_SCHEME  2>&1 | tee -a $LOG_FILE_NAME
-		
+		python3 -u getLumiROOT.py -o temp/${last_run} "$start_time" "$stop_time" --nxcals_variables ATLAS:LUMI_TOT_INST ATLAS:BUNCH_LUMI_INST ATLAS.OFFLINE:LUMI_TOT_INST ATLAS.OFFLINE:BUNCH_LUMI_INST CMS:LUMI_TOT_INST CMS.OFFLINE:LUMI_TOT_INST LHCB:LUMI_TOT_INST ALICE:LUMI_TOT_INST LHC.BRAND.1R:LuminosityBunchSum:totalLuminosityBunchSum LHC.BRANA.4L1:TOTAL_LUMINOSITY HX:BETASTAR_IP1 LHC.BRANA.4L1:LUMINOSITY_Q1 LHC.BRANA.4L1:LUMINOSITY_Q2 LHC.BRANA.4L1:LUMINOSITY_Q3 LHC.BRANA.4L1:LUMINOSITY_Q4 HX:BMODE LHC.LUMISERVER:AutomaticScanIP1:Beam LHC.LUMISERVER:AutomaticScanIP1:Active LHC.LUMISERVER:AutomaticScanIP1:Nominal_Separation LHC.LUMISERVER:AutomaticScanIP1:Nominal_Separation_Plane LHC.LUMISERVER:AutomaticScanIP1:Read_Nominal_Displacement_B1_sepPlane LHC.LUMISERVER:AutomaticScanIP1:Read_Nominal_Displacement_B1_xingPlane LHC.LUMISERVER:AutomaticScanIP1:Read_Nominal_Displacement_B2_sepPlane LHC.LUMISERVER:AutomaticScanIP1:Read_Nominal_Displacement_B2_xingPlane LHC.COLLISIONS.SCHEME:HO_collisions:HO_coll_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B2:LR_encounters_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B2:HO_partner_collisions_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B2:filled_bunches LHC.COLLISIONS.SCHEME:collisions_partners_B1:LR_encounters_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B1:HO_partner_collisions_ATLAS LHC.COLLISIONS.SCHEME:collisions_partners_B1:filled_bunches LHC.STATS:LHC:INJECTION_SCHEME LHC.STATS:FILLING_SCHEME  2>&1 | tee -a $LOG_FILE_NAME
+
+# LHC.BRAND.1R:LuminosityPerBunch:luminosityPerBunch		
 		kdestroy -p cristova@CERN.CH
 
 		k5start -f ~/.Authentication/cvilela.kt -u cvilela
