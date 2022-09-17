@@ -155,7 +155,8 @@ last_completed_fill = ldb.getLHCFillData()
 last_fill_to_process = last_completed_fill
 
 last_run_end = max(raw_data_times[:,2])
-print("Processing fills from {0} to {1}".format(last_processed_fill + 1, last_completed_fill['fillNumber']))
+if last_processed_fill != last_completed_fill['fillNumber'] :
+    print("Processing fills from {0} to {1}".format(last_processed_fill + 1, last_completed_fill['fillNumber']))
 for i_fill in range(last_processed_fill + 1, last_completed_fill['fillNumber'] + 1) :
     print("Looking at fill {0}".format(i_fill))
     this_fill = ldb.getLHCFillData(i_fill)
@@ -171,7 +172,8 @@ for i_fill in range(last_processed_fill + 1, last_completed_fill['fillNumber'] +
     runs_in_fill = raw_data_times[np.logical_and(run_starts_before_fill_end, run_ends_after_fill_start)]
 
     # Open output file
-    f_out = ROOT.TFile(args.output_dir+"/fill_{0:06d}.root".format(i_fill), "RECREATE")
+#    f_out = ROOT.TFile(args.output_dir+"/fill_{0:06d}.root".format(i_fill), "RECREATE")
+    f_out = ROOT.TFile("fill_{0:06d}.root".format(i_fill), "RECREATE")
     for directory_name, queries in NXCALS_VARIABLES.items() :
         f_out.mkdir(directory_name)
         f_out.cd(directory_name)
@@ -248,31 +250,7 @@ for i_fill in range(last_processed_fill + 1, last_completed_fill['fillNumber'] +
                 out_tree.Write()
         
     f_out.Close()
-    exit()
-                  
-
-    
-    
-#print(datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"))
-
-#print(ldb.get("HX:FILLN", datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), "last", unixtime = True))
-
-
-#    if os.is_file() :
-
-#print(processed_raw_data)
-
-# Get last *completed* fill.
-# Get all fills between last processed fill and last completed fill.
-
-# Get get all time stamps between last processed run (included) and latest run in raw_data.
-
-# Loop over completed fills
-# If fill end_time > latest run end_time :
-#     continue
-# Else
-# Get all data for the fill.
-# Compute run number for each timestamp
-# Compute run_time for each timestamp
-# Fill TTrees
-# Save file
+    os.system("k5start -f ~/.Authentication/cvilela.kt -u cvilela")
+    os.system("xrdcp -v fill_{0:06d}.root {1}/fill_{0:06d}.root".format(i_fill, args.output_dir))
+    os.system("rm fill_{0:06d}.root".format(i_fill))
+    os.system("k5start -f ~/.Authentication/cristova.kt -u cristova")
