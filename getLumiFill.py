@@ -48,10 +48,10 @@ NXCALS_VARIABLES["AutomaticScans"] = ["LHC.LUMISERVER:AutomaticScanIP%:Nominal%"
 NXCALS_VARIABLES["CollimatorSettingsIP1"] =  ["TCL.%1.B%:SET_%",
                                               "TCTP%.%1.%:SET_%"]
 
-FIRST_FILL=7921
+FIRST_FILL=7920
 FIRST_RUN=4362
 
-EPSILON = 0.1e-6 # To avoid rounding trouble. Look for database entries starting 0.1 ms before the start of the fill.
+EPSILON = 1e-6 # To avoid rounding trouble. Look for database entries starting 1 ms before the start of the fill.
 
 def getRunDuration(run_dir) :
     last_file = glob.glob(args.raw_data_dir+"/"+run_dir+"/data_*")[-1]
