@@ -51,6 +51,8 @@ NXCALS_VARIABLES["CollimatorSettingsIP1"] =  ["TCL.%1.B%:SET_%",
 FIRST_FILL=7921
 FIRST_RUN=4362
 
+EPSILON = 0.1e-6 # To avoid rounding trouble. Look for database entries starting 0.1 ms before the start of the fill.
+
 def getRunDuration(run_dir) :
     last_file = glob.glob(args.raw_data_dir+"/"+run_dir+"/data_*")[-1]
     try :
@@ -179,7 +181,7 @@ for i_fill in range(last_processed_fill + 1, last_completed_fill['fillNumber'] +
         f_out.cd(directory_name)
 
         for q in queries :
-            data = ldb.get(q, this_fill['startTime'], this_fill['endTime'], unixtime = True)
+            data = ldb.get(q, this_fill['startTime'] - EPSILON, this_fill['endTime'], unixtime = True)
             
             for variable_name, d in data.items() :
 
