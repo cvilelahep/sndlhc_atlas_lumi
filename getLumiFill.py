@@ -67,6 +67,7 @@ def getRunDuration(run_dir) :
         f.data.GetEntry(f.data.GetEntries()-1)
         return f.data.evt_timestamp/0.160316/1e9
     f.Close()
+    del f
 
 # Temporary, for running on my VM. Will move to sndonline user and remove these lines. Secondary account to access SND@LHC EOS.
 os.system("k5start -f ~/.Authentication/cvilela.kt -u cvilela")
@@ -84,6 +85,8 @@ try :
     except AttributeError :
         print("No beam mode data in previous fill, so processing files from the start")
         last_processed_run = FIRST_RUN
+    f_temp.Close()
+    del f_temp
 except OSError :
     last_processed_run = FIRST_RUN
 
@@ -109,19 +112,23 @@ for run_dir in processed_raw_data :
             run_timestamps = json.load(f_run_timestamps)
             if "Z" in run_timestamps["start_time"] :
                 run_timezone = pytz.timezone("UTC")
+                print("UTC")
             else :
                 run_timezone = pytz.timezone("Europe/Zurich")
+                print("Europe/Zurich")
 
             run_start = dateutil.parser.isoparse(run_timestamps["start_time"])
             try :
-                run_start = run_timezone.localize(run_start)
+                run_start.replace(tzinfo = run_timezone)
+                run_start = run_start.astimezone(pytz.UTC)
             except ValueError :
                 pass
 
             try :
                 run_stop = dateutil.parser.isoparse(run_timestamps["stop_time"])
                 try :
-                    run_stop = run_timezone.localize(run_stop)
+                    run_stop.replace(tzinfo = run_timezone)
+                    run_stop = run_stop.astimezone(pytz.UTC)
                 except ValueError :
                     pass
             except KeyError :
@@ -145,6 +152,7 @@ for run_dir in processed_raw_data :
     raw_data_times.append([run_number, time.mktime(run_start.timetuple()), time.mktime(run_stop.timetuple())])
 
 raw_data_times = np.array(raw_data_times)
+print(raw_data_times)
 
 # Temporary, for running on my VM. Will move to sndonline user and remove these lines. Primary account to access NXCALS.
 os.system("k5start -f ~/.Authentication/cristova.kt -u cristova")
@@ -165,6 +173,7 @@ for i_fill in range(last_processed_fill + 1, last_completed_fill['fillNumber'] +
 
     # First, check if the fill ends before the end of the last available run. If not, do not process it yet.
     if this_fill['endTime'] > last_run_end :
+        print("Current fill end time ({0}) is after the last completed run end time ({1}). Skipping.".format(this_fill['endTime'], last_run_end))
         continue
     
     # Find runs belonging to this fill
@@ -173,6 +182,17 @@ for i_fill in range(last_processed_fill + 1, last_completed_fill['fillNumber'] +
     
     runs_in_fill = raw_data_times[np.logical_and(run_starts_before_fill_end, run_ends_after_fill_start)]
 
+    # Very long fills return larger-than-memory arrays. Make chunks of 12 hours
+    time_chunks = []
+    max_delta_time = 12*60*60 # 12 hours in seconds
+    n_time_chunks = int((this_fill['endTime'] - this_fill['startTime'])/max_delta_time) + 1
+
+    for i_chunk in range(n_time_chunks) :
+        if this_fill['startTime'] + (i_chunk+1)*max_delta_time > this_fill['endTime'] :
+            time_chunks.append([this_fill['startTime'] + i_chunk*max_delta_time, this_fill['endTime']])
+        else :
+            time_chunks.append([this_fill['startTime'] + i_chunk*max_delta_time, this_fill['startTime'] + (i_chunk+1)*max_delta_time])
+    
     # Open output file
 #    f_out = ROOT.TFile(args.output_dir+"/fill_{0:06d}.root".format(i_fill), "RECREATE")
     f_out = ROOT.TFile("fill_{0:06d}.root".format(i_fill), "RECREATE")
@@ -181,76 +201,89 @@ for i_fill in range(last_processed_fill + 1, last_completed_fill['fillNumber'] +
         f_out.cd(directory_name)
 
         for q in queries :
-            data = ldb.get(q, this_fill['startTime'] - EPSILON, this_fill['endTime'], unixtime = True)
+            out_trees = {}
+            out_vars = {}
+
+            unix_timestamp = array.array('d', [0.])
+            run_time = array.array('d', [0.])
+            run_number_branch = array.array('i', [0])
             
-            for variable_name, d in data.items() :
-
-                print("Processing {0}".format(variable_name))
-                if len(d[0]) == 0 :
-                    print("No data, skipping.")
-                    continue
-
-                if 'str' in d[1].dtype.name :
-                    data_is_string = True
-                else :
-                    data_is_string = False
-                    try :
-                        array_length = len(d[1][0])
-                    except TypeError :
-                        array_length = 1
+            for chunk_start, chunk_end in time_chunks :
                 
-                tree_name = variable_name.replace(":", "_").replace(".", "_")
-                out_tree = ROOT.TTree(tree_name, tree_name)
-
-                unix_timestamp = array.array('d', [0.])
-                out_tree.Branch("unix_timestamp", unix_timestamp, "unix_timestamp/D")
-
-                if not data_is_string :
-                    var = array.array('d', [0.]*array_length)
-                    if array_length > 1 :
-                        out_tree.Branch("var", var, "var["+str(array_length)+"]/D")
-                    else :
-                        out_tree.Branch("var", var, "var/D")
-                else :
-                    var = ROOT.std.string()
-                    out_tree.Branch("var", var)
-
-                run_time = array.array('d', [0.])
-                out_tree.Branch("run_time", run_time, "run_time/D")    
-
-                run_number_branch = array.array('i', [0])
-                out_tree.Branch("run_number", run_number_branch, "run_number/I")    
-
-                # Figure out run number and run time corresponding to each database entry
-                run_times = np.array([-1.]*len(d[0]))
-                run_numbers = np.array([-1]*len(d[0]))
+                data = ldb.get(q, chunk_start - EPSILON, chunk_end - EPSILON, unixtime = True)
                 
-                for raw_data_time in raw_data_times :
-                    timestamps_after_run_start = d[0] > raw_data_time[1]
-                    timestamps_before_run_end = d[0] < raw_data_time[2]
+                for variable_name, d in data.items() :
+                
+                    print("Processing {0}".format(variable_name))
+                    if len(d[0]) == 0 :
+                        print("No data, skipping.")
+                        continue
 
-                    timestamps_in_run = np.logical_and(timestamps_after_run_start, timestamps_before_run_end)
-                    
-                    run_numbers[timestamps_in_run] = raw_data_time[0]
-                    run_times[timestamps_in_run] = d[0][timestamps_in_run] - raw_data_time[1]
+                    tree_name = variable_name.replace(":", "_").replace(".", "_")
 
-                for i_data in range(len(d[0])) :
-                    unix_timestamp[0] = d[0][i_data]
-                    if not data_is_string :
-                        if array_length == 1 :
-                            var[0] = d[1][i_data]
+                    if tree_name not in out_trees :
+                        if 'str' in d[1].dtype.name :
+                            data_is_string = True
                         else :
-                            for i_element, element in enumerate(d[1][i_data]) :
-                                var[i_element] = element
-                    else :
-                        var.replace(0, ROOT.std.string.npos, d[1][i_data])    
+                            data_is_string = False
+                            try :
+                                array_length = len(d[1][0])
+                            except TypeError :
+                                array_length = 1
 
-                    run_time[0] = run_times[i_data]
-                    run_number_branch[0] = run_numbers[i_data]
+                        out_trees[tree_name] = ROOT.TTree(tree_name, tree_name)
+                        out_trees[tree_name].Branch("unix_timestamp", unix_timestamp, "unix_timestamp/D")
+                
+                        if not data_is_string :
+                            out_vars[tree_name] = array.array('d', [0.]*array_length)
+                            if array_length > 1 :
+                                out_trees[tree_name].Branch("var", out_vars[tree_name], "var["+str(array_length)+"]/D")
+                            else :
+                                out_trees[tree_name].Branch("var", out_vars[tree_name], "var/D")
+                        else :
+                            out_vars[tree_name] = ROOT.std.string()
+                            out_trees[tree_name].Branch("var", out_vars[tree_name])
+                        
+                        out_trees[tree_name].Branch("run_time", run_time, "run_time/D")    
+                        
+                        out_trees[tree_name].Branch("run_number", run_number_branch, "run_number/I")    
+                
+                    # Figure out run number and run time corresponding to each database entry
+                    run_times = np.array([-1.]*len(d[0]))
+                    run_numbers = np.array([-1]*len(d[0]))
+                    
+                    for raw_data_time in raw_data_times :
+                        timestamps_after_run_start = d[0] > raw_data_time[1]
+                        timestamps_before_run_end = d[0] < raw_data_time[2]
+                
+                        timestamps_in_run = np.logical_and(timestamps_after_run_start, timestamps_before_run_end)
+                        
+                        run_numbers[timestamps_in_run] = raw_data_time[0]
+                        run_times[timestamps_in_run] = d[0][timestamps_in_run] - raw_data_time[1]
+                
+                    for i_data in range(len(d[0])) :
+                        unix_timestamp[0] = d[0][i_data]
+                        if not data_is_string :
+                            if array_length == 1 :
+                                out_vars[tree_name][0] = d[1][i_data]
+                            else :
+                                for i_element, element in enumerate(d[1][i_data]) :
+                                    out_vars[tree_name][i_element] = element
+                        else :
+                            out_vars[tree_name].replace(0, ROOT.std.string.npos, d[1][i_data])    
+                
+                        run_time[0] = run_times[i_data]
+                        run_number_branch[0] = run_numbers[i_data]
+                
+                        out_trees[tree_name].Fill()
+                try :
+                    del data
+                except NameError :
+                    pass
 
-                    out_tree.Fill()
-                out_tree.Write()
-        
+            for tree in out_trees.values() :
+                tree.Write()
+                    
     f_out.Close()
     os.system("k5start -f ~/.Authentication/cvilela.kt -u cvilela")
     os.system("xrdcp -v fill_{0:06d}.root {1}/fill_{0:06d}.root".format(i_fill, args.output_dir))
