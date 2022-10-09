@@ -21,32 +21,55 @@ parser.add_argument("--raw_data_dir", type = str, help="Directory with SND@LHC r
 
 args = parser.parse_args()
 
+def downsample_2d(d, factor) :
+    times = d[0]
+    values = d[1]
+
+    # Make arrays divisible by factor (throw away remainder)
+    length = len(times)
+
+    if length < factor :
+        factor = length
+    
+    new_length = int(length/factor)*factor
+    
+    times = times[:new_length]
+    values = values[:new_length]
+
+    downsampled_times = times.reshape(-1, int(factor)).mean(axis = 1)
+    downsampled_values = values.reshape(-1, int(factor), values.shape[-1]).mean(axis = 1)
+
+    return(downsampled_times, downsampled_values)
 
 NXCALS_VARIABLES = {}
-NXCALS_VARIABLES["LuminosityIP1"] = ["ATLAS:LUMI_TOT_INST",
-                                     "ATLAS:BUNCH_LUMI_INST",
-                                     "ATLAS.OFFLINE:LUMI_TOT_INST",
-                                     "ATLAS.OFFLINE:BUNCH_LUMI_INST",
-                                     "LHC.BRAND.1R:LuminosityBunchSum:totalLuminosityBunchSum",
-                                     "LHC.BRANA.4L1:TOTAL_LUMINOSITY",
-                                     "LHC.BRANA.4L1:LUMINOSITY_Q1",
-                                     "LHC.BRANA.4L1:LUMINOSITY_Q2",
-                                     "LHC.BRANA.4L1:LUMINOSITY_Q3",
-                                     "LHC.BRANA.4L1:LUMINOSITY_Q4"]
+NXCALS_VARIABLES["LuminosityIP1"] = [["ATLAS:LUMI_TOT_INST", 12*60*60, None],
+                                     ["ATLAS:BUNCH_LUMI_INST", 12*60*60, None],
+                                     ["ATLAS.OFFLINE:LUMI_TOT_INST", 12*60*60, None],
+                                     ["ATLAS.OFFLINE:BUNCH_LUMI_INST", 12*60*60, None],
+                                     ["LHC.BRAND.1R:LuminosityBunchSum:totalLuminosityBunchSum", 12*60*60, None],
+                                     ["LHC.BRANA.4L1:TOTAL_LUMINOSITY", 12*60*60, None],
+                                     ["LHC.BRANA.4L1:LUMINOSITY_Q1", 12*60*60, None],
+                                     ["LHC.BRANA.4L1:LUMINOSITY_Q2", 12*60*60, None],
+                                     ["LHC.BRANA.4L1:LUMINOSITY_Q3", 12*60*60, None],
+                                     ["LHC.BRANA.4L1:LUMINOSITY_Q4", 12*60*60, None]]
 
-NXCALS_VARIABLES["LuminosityOtherIPs"] = ["CMS:LUMI_TOT_INST",
-                                          "CMS.OFFLINE:LUMI_TOT_INST",
-                                          "LHCB:LUMI_TOT_INST",
-                                          "ALICE:LUMI_TOT_INST"]
+NXCALS_VARIABLES["LuminosityOtherIPs"] = [["CMS:LUMI_TOT_INST", 12*60*60, None],
+                                          ["CMS.OFFLINE:LUMI_TOT_INST", 12*60*60, None],
+                                          ["LHCB:LUMI_TOT_INST", 12*60*60, None],
+                                          ["ALICE:LUMI_TOT_INST", 12*60*60, None]]
 
-NXCALS_VARIABLES["LHC"] = ["HX:BMODE",
-                           "LHC.STATS:LHC:INJECTION_SCHEME",
-                           "HX:BETASTAR_IP1"]
+NXCALS_VARIABLES["LHC"] = [["HX:BMODE", 12*60*60, None],
+                           ["LHC.STATS:LHC:INJECTION_SCHEME", 12*60*60, None],
+                           ["HX:BETASTAR_IP1", 12*60*60, None],
+#                           ["LHC.BQM.B%:BUNCH_INTENSITIES", 120*60, lambda d : downsample_2d(d, 60)], # Data gets published every second or so. A factor of 60 will result in about one data point per minute. The 120 minute time interval for the database queries is determined by the available memory in the VM this script is currently running in.
+#                           ["LHC.BQM.B%:FILLED_BUCKETS", 120*60, lambda d : downsample_2d(d, 60)],
+#                           ["LHC.BCTFR.%6R4.B%:BUNCH_INTENSITY", 120*60, lambda d : downsample_2d(d, 60)],
+                           ["LHC.BCTFR.%6R4.B%:BEAM_INTENSITY", 12*60*60, None]]
 
-NXCALS_VARIABLES["AutomaticScans"] = ["LHC.LUMISERVER:AutomaticScanIP%:Nominal%"]
+NXCALS_VARIABLES["AutomaticScans"] = [["LHC.LUMISERVER:AutomaticScanIP%:Nominal%", 12*60*60, None]]
 
-NXCALS_VARIABLES["CollimatorSettingsIP1"] =  ["TCL.%1.B%:SET_%",
-                                              "TCTP%.%1.%:SET_%"]
+NXCALS_VARIABLES["CollimatorSettingsIP1"] =  [["TCL.%1.B%:SET_%", 12*60*60, None],
+                                              ["TCTP%.%1.%:SET_%", 12*60*60, None]]
 
 FIRST_FILL=7920
 FIRST_RUN=4362
@@ -110,27 +133,16 @@ for run_dir in processed_raw_data :
     try :
         with open(args.raw_data_dir+"/"+run_dir+"/run_timestamps.json", "r") as f_run_timestamps :
             run_timestamps = json.load(f_run_timestamps)
-            if "Z" in run_timestamps["start_time"] :
-                run_timezone = pytz.timezone("UTC")
-                print("UTC")
-            else :
-                run_timezone = pytz.timezone("Europe/Zurich")
-                print("Europe/Zurich")
-
+            if "Z" not in run_timestamps["start_time"] :
+                run_timestamps["start_time"] += "Z"
             run_start = dateutil.parser.isoparse(run_timestamps["start_time"])
-            try :
-                run_start.replace(tzinfo = run_timezone)
-                run_start = run_start.astimezone(pytz.UTC)
-            except ValueError :
-                pass
+            run_start = run_start.astimezone(pytz.timezone("Europe/Zurich"))
 
             try :
+                if "Z" not in run_timestamps["stop_time"] :
+                    run_timestamps["stop_time"] += "Z"
                 run_stop = dateutil.parser.isoparse(run_timestamps["stop_time"])
-                try :
-                    run_stop.replace(tzinfo = run_timezone)
-                    run_stop = run_stop.astimezone(pytz.UTC)
-                except ValueError :
-                    pass
+                run_stop = run_stop.astimezone(pytz.timezone("Europe/Zurich"))
             except KeyError :
                 run_duration = getRunDuration(run_dir)
                 if run_duration < 0 :
@@ -138,8 +150,10 @@ for run_dir in processed_raw_data :
                 run_stop = run_start + datetime.timedelta(seconds = run_duration)
                 
     except FileNotFoundError :
-        with open("/eos/experiment/sndlhc/convertedData/commissioning/TI18/RunInfodict.pkl", "rb") as f_run_dict :
-            run_dict = pickle.load(f_run_dict)
+        try :
+            f_run_dict = ROOT.TFile("/eos/experiment/sndlhc/convertedData/commissioning/TI18/RunInfodict.root")
+            run_dict = pickle.loads(str(f_run_dict.runInfo.GetString()).encode())
+#            run_dict = pickle.load(f_run_dict)
             if run_number not in run_dict :
                 print("Couldn't find run {0} timestamps in raw_data directory nor in RunInfodict.pkl".format(run_number))
                 continue
@@ -149,10 +163,12 @@ for run_dir in processed_raw_data :
                 if run_duration < 0 :
                     continue
                 run_stop = run_start + datetime.timedelta(seconds = run_duration)
+        except FileNotFoundError :
+            print("RunInfodict.pkl not accessible. Old runs will not be processed")
+            continue
     raw_data_times.append([run_number, time.mktime(run_start.timetuple()), time.mktime(run_stop.timetuple())])
 
 raw_data_times = np.array(raw_data_times)
-print(raw_data_times)
 
 # Temporary, for running on my VM. Will move to sndonline user and remove these lines. Primary account to access NXCALS.
 os.system("k5start -f ~/.Authentication/cristova.kt -u cristova")
@@ -182,16 +198,6 @@ for i_fill in range(last_processed_fill + 1, last_completed_fill['fillNumber'] +
     
     runs_in_fill = raw_data_times[np.logical_and(run_starts_before_fill_end, run_ends_after_fill_start)]
 
-    # Very long fills return larger-than-memory arrays. Make chunks of 12 hours
-    time_chunks = []
-    max_delta_time = 12*60*60 # 12 hours in seconds
-    n_time_chunks = int((this_fill['endTime'] - this_fill['startTime'])/max_delta_time) + 1
-
-    for i_chunk in range(n_time_chunks) :
-        if this_fill['startTime'] + (i_chunk+1)*max_delta_time > this_fill['endTime'] :
-            time_chunks.append([this_fill['startTime'] + i_chunk*max_delta_time, this_fill['endTime']])
-        else :
-            time_chunks.append([this_fill['startTime'] + i_chunk*max_delta_time, this_fill['startTime'] + (i_chunk+1)*max_delta_time])
     
     # Open output file
 #    f_out = ROOT.TFile(args.output_dir+"/fill_{0:06d}.root".format(i_fill), "RECREATE")
@@ -200,36 +206,56 @@ for i_fill in range(last_processed_fill + 1, last_completed_fill['fillNumber'] +
         f_out.mkdir(directory_name)
         f_out.cd(directory_name)
 
-        for q in queries :
+        for q, max_delta_time, scaling in queries :
             out_trees = {}
             out_vars = {}
+
+            # Very long fills return larger-than-memory arrays. Make chunks of 12 hours, or shorter.
+            time_chunks = []
+            n_time_chunks = int((this_fill['endTime'] - this_fill['startTime'])/max_delta_time) + 1
+
+            for i_chunk in range(n_time_chunks) :
+                if this_fill['startTime'] + (i_chunk+1)*max_delta_time > this_fill['endTime'] :
+                    time_chunks.append([this_fill['startTime'] + i_chunk*max_delta_time, this_fill['endTime']])
+                else :
+                    time_chunks.append([this_fill['startTime'] + i_chunk*max_delta_time, this_fill['startTime'] + (i_chunk+1)*max_delta_time])
 
             unix_timestamp = array.array('d', [0.])
             run_time = array.array('d', [0.])
             run_number_branch = array.array('i', [0])
             
-            for chunk_start, chunk_end in time_chunks :
-                
-                data = ldb.get(q, chunk_start - EPSILON, chunk_end - EPSILON, unixtime = True)
-                
+            for i_chunk, [chunk_start, chunk_end] in enumerate(time_chunks) :
+                if scaling == "last" :
+                    data = ldb.get(q, chunk_end, "last", unixtime = True)
+                else :
+                    data = ldb.get(q, chunk_start - EPSILON, chunk_end - EPSILON, unixtime = True)
+
+
                 for variable_name, d in data.items() :
                 
-                    print("Processing {0}".format(variable_name))
+                    print("[{0}/{1}] Processing {2}".format(i_chunk+1, n_time_chunks, variable_name))
                     if len(d[0]) == 0 :
                         print("No data, skipping.")
                         continue
 
+                    print(d[0].shape, d[1].shape)
+                    
+                    if callable(scaling) :
+                        d = scaling(d)
+                    print(d[0].shape, d[1].shape)
+                    
                     tree_name = variable_name.replace(":", "_").replace(".", "_")
 
+                    if 'str' in d[1].dtype.name :
+                        data_is_string = True
+                    else :
+                        data_is_string = False
+                        try :
+                            array_length = len(d[1][0])
+                        except TypeError :
+                            array_length = 1
+                            
                     if tree_name not in out_trees :
-                        if 'str' in d[1].dtype.name :
-                            data_is_string = True
-                        else :
-                            data_is_string = False
-                            try :
-                                array_length = len(d[1][0])
-                            except TypeError :
-                                array_length = 1
 
                         out_trees[tree_name] = ROOT.TTree(tree_name, tree_name)
                         out_trees[tree_name].Branch("unix_timestamp", unix_timestamp, "unix_timestamp/D")
