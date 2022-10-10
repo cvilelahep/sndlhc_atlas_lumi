@@ -158,7 +158,7 @@ for run_dir in processed_raw_data :
                 print("Couldn't find run {0} timestamps in raw_data directory nor in RunInfodict.pkl".format(run_number))
                 continue
             else :
-                run_start = datetime.datetime.utcfromtimestamp(run_dict[run_number]["StartTime"])
+                run_start = datetime.datetime.fromtimestamp(run_dict[run_number]["StartTime"], tz = pytz.timezone("Europe/Zurich"))
                 run_duration = getRunDuration(run_dir)
                 if run_duration < 0 :
                     continue
