@@ -7,6 +7,7 @@ import numpy as np
 import json
 
 logo_location = "/afs/cern.ch/user/c/cvilela/Large__SND_Logo_blue.png"
+plt.rcParams["legend.loc"] = "center left"
 
 color_inst = 'navy'
 color_integrated = 'chocolate'
@@ -18,8 +19,8 @@ def addLogo(fig) :
 
     try :
         im = plt.imread(logo_location)
-        newax = fig.add_axes([0.125,0.2,0.175,0.175], anchor='NW', zorder=100)
-        newax.imshow(im)
+        newax = fig.add_axes([0.125,0.6,0.175,0.175], anchor='NW', zorder=100)
+        newax.imshow(im, interpolation='none')
         newax.axis('off')
     except :
         print("Error getting logo")
@@ -139,20 +140,22 @@ ax_inst.set_ylabel("Instantaneous luminosity [fb$^{-1}$s$^{-1}$]")
 ax_inst.set_yscale("log")
 ax_inst.legend()
 
-fig_cumulative.savefig("sndlhc_delivered_recorded_integrated_lumi.png")
-fig_cumulative.savefig("sndlhc_delivered_recorded_integrated_lumi.pdf")
-fig_cumulative.savefig("sndlhc_delivered_recorded_integrated_lumi.eps")
+ax_cumulative.grid(alpha = 0.3)
+fig_cumulative.savefig("sndlhc_delivered_recorded_integrated_lumi.png", dpi = 300)
+fig_cumulative.savefig("sndlhc_delivered_recorded_integrated_lumi.pdf", dpi = 300)
+fig_cumulative.savefig("sndlhc_delivered_recorded_integrated_lumi.eps", dpi = 300)
 
-fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi.png")
-fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi.pdf")
-fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi.eps")
+ax_inst.grid(alpha = 0.3)
+fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi.png", dpi = 300)
+fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi.pdf", dpi = 300)
+fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi.eps", dpi = 300)
 
 for i_emulsion in range(len(emulsion_mask)) :
     ax_inst.plot(delivered_unix_timestamp[emulsion_mask[i_emulsion]], delivered_inst_lumi[emulsion_mask[i_emulsion]]/1e9, label = "Emulsion run {0}".format(i_emulsion))
 
-fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi_emulsion.png")
-fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi_emulsion.pdf")
-fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi_emulsion.eps")
+fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi_emulsion.png", dpi = 300)
+fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi_emulsion.pdf", dpi = 300)
+fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi_emulsion.eps", dpi = 300)
 
     
 print("LAST UPDATE: {0}Z".format(datetime.datetime.fromtimestamp(time_now).isoformat()))
@@ -196,4 +199,3 @@ for i_dead_period in range(len(dead_period_mask)) :
     print("")
     
 
-plt.show()
