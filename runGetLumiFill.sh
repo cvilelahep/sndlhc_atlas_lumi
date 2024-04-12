@@ -11,7 +11,7 @@ LOG_FILE_NAME=${LOG_DIR}/get_nxcals_data_`date +'%Y%m%d'`.log
 
 echo `date` Start 2>&1 | tee -a $LOG_FILE_NAME
 echo Getting nxcals data 2>&1 | tee -a $LOG_FILE_NAME
-python3 -u ${SCRIPT_DIR}/getLumiFill.py -o /eos/experiment/sndlhc/nxcals_data --raw_data_dir /eos/experiment/sndlhc/raw_data/physics/2023_tmp/ 2>&1 | tee -a $LOG_FILE_NAME
+python3 -u ${SCRIPT_DIR}/getLumiFill.py -o /eos/experiment/sndlhc/nxcals_data --raw_data_dir /eos/experiment/sndlhc/raw_data/physics/2024/ecc_run_06/ 2>&1 | tee -a $LOG_FILE_NAME
 echo Getting ATLAS data 2>&1 | tee -a $LOG_FILE_NAME
 python3 -u ${SCRIPT_DIR}/getLumiFillATLAS.py -o /eos/experiment/sndlhc/atlas_lumi 2>&1 | tee -a $LOG_FILE_NAME
 echo Updating deadtime | tee -a $LOG_FILE_NAME
