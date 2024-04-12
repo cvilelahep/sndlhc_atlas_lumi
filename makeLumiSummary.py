@@ -15,6 +15,8 @@ color_run_band = 'royalblue'
 muon_rate_color = 'black'
 total_rate_color = 'tab:gray'
 
+MAX_DELTA = 120 # In seconds. If the time difference between two points exceeds this number, ignore data point. This is to avoid integrating over gaps in the data.
+
 def addLogo(fig) :
 
     try :
@@ -130,8 +132,8 @@ fig_inst, ax_inst = plt.subplots(figsize = (10, 5))
 ax_inst.plot(delivered_unix_timestamp, delivered_inst_lumi/1e9, label = "Delivered", color = color_inst)
 ax_inst.plot(delivered_unix_timestamp[recorded_mask], delivered_inst_lumi[recorded_mask]/1e9, label = "Recorded", color = color_integrated)
 
-addLogo(fig_cumulative)
-addLogo(fig_inst)
+#addLogo(fig_cumulative)
+#addLogo(fig_inst)
 
 ax_cumulative.set_ylabel("Integrated luminosity [fb$^{-1}$]")
 ax_cumulative.legend()
@@ -157,24 +159,27 @@ fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi_emulsion.png", dp
 fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi_emulsion.pdf", dpi = 300)
 fig_inst.savefig("sndlhc_delivered_recorded_instantaneous_lumi_emulsion.eps", dpi = 300)
 
-    
+
 print("LAST UPDATE: {0}Z".format(datetime.datetime.fromtimestamp(time_now).isoformat()))
 print("All time:")
 print("Delivered luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[delivered_mask], delivered_inst_lumi[1:][delivered_mask]))[-1]/1e9))
 print("Recorded luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[recorded_delta_mask], delivered_inst_lumi[1:][recorded_delta_mask]))[-1]/1e9))
 print()
-print("Last 24 hours:")
-print("Delivered luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[delivered_24], delivered_inst_lumi[1:][delivered_24]))[-1]/1e9))
-print("Recorded luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[recorded_24], delivered_inst_lumi[1:][recorded_24]))[-1]/1e9))
-print()
-print("Last 72 hours:")
-print("Delivered luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[delivered_72], delivered_inst_lumi[1:][delivered_72]))[-1]/1e9))
-print("Recorded luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[recorded_72], delivered_inst_lumi[1:][recorded_72]))[-1]/1e9))
-print()
-print("Last week:")
-print("Delivered luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[delivered_week], delivered_inst_lumi[1:][delivered_week]))[-1]/1e9))
-print("Recorded luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[recorded_week], delivered_inst_lumi[1:][recorded_week]))[-1]/1e9))
-print()
+try :
+    print("Last 24 hours:")
+    print("Delivered luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[delivered_24], delivered_inst_lumi[1:][delivered_24]))[-1]/1e9))
+    print("Recorded luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[recorded_24], delivered_inst_lumi[1:][recorded_24]))[-1]/1e9))
+    print()
+    print("Last 72 hours:")
+    print("Delivered luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[delivered_72], delivered_inst_lumi[1:][delivered_72]))[-1]/1e9))
+    print("Recorded luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[recorded_72], delivered_inst_lumi[1:][recorded_72]))[-1]/1e9))
+    print()
+    print("Last week:")
+    print("Delivered luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[delivered_week], delivered_inst_lumi[1:][delivered_week]))[-1]/1e9))
+    print("Recorded luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[recorded_week], delivered_inst_lumi[1:][recorded_week]))[-1]/1e9))
+    print()
+except IndexError :
+    pass
 for i_emulsion in range(len(emulsion_mask)) :
     print("Emulsion run {0}:".format(i_emulsion))
     print("Delivered luminosity: {0:0.3f} fb-1".format(np.cumsum(np.multiply(delivered_deltas[emulsion_mask[i_emulsion][1:]], delivered_inst_lumi[1:][emulsion_mask[i_emulsion][1:]]))[-1]/1e9))
