@@ -21,7 +21,7 @@ git pull | tee -a $LOG_FILE_NAME
 cd $SCRIPT_DIR
 echo Making summary | tee -a $LOG_FILE_NAME
 #python3 -u ${SCRIPT_DIR}/makeLumiSummary.py > lumi_summary.txt
-PYTHONPATH=/home/sndlumi/.local/lib/python3.8/site-packages:${PYTHONPATH} python makeLumiSummaryDataFrame.py
+PYTHONPATH=/home/sndlumi/.local/lib/python3.8/site-packages:${PYTHONPATH} python makeLumiSummaryDataFrame.py 2>&1 | tee -a $LOG_FILE_NAME
 xrdcp -f index.html $EOS_DIR 2>&1 | tee -a $LOG_FILE_NAME
 xrdcp -f Plots/* $EOS_DIR 2>&1 | tee -a $LOG_FILE_NAME
 

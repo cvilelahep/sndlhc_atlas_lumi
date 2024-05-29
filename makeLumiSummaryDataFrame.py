@@ -129,6 +129,7 @@ year_recorded = OrderedDict()
 
 runs = []
 
+emulsion_runs_number = []
 emulsion_runs_delivered = []
 emulsion_runs_recorded = []
 
@@ -306,7 +307,8 @@ for i_year, year in enumerate(year_mask.keys()) :
             emulsion_axes_inst = [ax_instantaneous, ax_instantaneous_year, ax_instantaneous_emulsion, ax_instantaneous_mod]
             emulsion_axes_int = [ax_integrated, ax_integrated_year, ax_integrated_emulsion, ax_integrated_mod]
             emulsion_offsets = [datetime.timedelta(0.), datetime.timedelta(0.), datetime.timedelta(0.), datetime.timedelta(days = int((year-2022)*365.25))]
-            
+
+            emulsion_runs_number.append(emulsion_run["emulsion_run_number"])
             emulsion_runs_delivered.append(integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date), year_mask[year]), emulsion_axes_inst , emulsion_axes_int, date_offset = emulsion_offsets, label = "Emulsion run {0}".format(i_emulsion_run), color = this_color, linewidth = 1))
             emulsion_runs_recorded.append(integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(~dead_time, np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date)), year_mask[year]), emulsion_axes_inst, emulsion_axes_int, date_offset = emulsion_offsets, label = None, color = this_color, linestyle = "--", linewidth = 1))
         
@@ -415,7 +417,7 @@ html.append("<th>Instantaneous</th>")
 html.append("</tr>")
 for i_emulsion in range(len(emulsion_runs_delivered)-1, -1, -1) :
     html.append("<tr>")
-    html.append("<td>{}</td>".format(i_emulsion))
+    html.append("<td>{}</td>".format(emulsion_runs_number[i_emulsion]))
     html.append("<td>{:.3f}</td>".format(emulsion_runs_delivered[i_emulsion][0]))
     html.append("<td>{:.3f}</td>".format(emulsion_runs_recorded[i_emulsion][0]))
     html.append("<td>{}</td>".format(datetime.datetime.fromtimestamp(emulsion_runs_delivered[i_emulsion][1]).isoformat()))
