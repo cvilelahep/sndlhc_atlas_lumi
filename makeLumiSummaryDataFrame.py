@@ -293,7 +293,7 @@ for i_year, year in enumerate(year_mask.keys()) :
     
         dummy_fig, dummy_ax = plt.subplots(figsize = (10, 5))
         
-        this_emu_delivered = integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date), year_mask[year]), [dummy_ax] , [dummy_ax], label = "Emulsion run {0}".format(i_emulsion_run), color = this_color, linewidth = 1)
+        this_emu_delivered = integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date), year_mask[year]), [dummy_ax] , [dummy_ax], label = "DAQ run period {0}".format(emulsion_runs_number[i_emulsion_run]), color = this_color, linewidth = 1)
 
         dummy_fig.clf()
         plt.close(dummy_fig)
@@ -309,7 +309,7 @@ for i_year, year in enumerate(year_mask.keys()) :
             emulsion_offsets = [datetime.timedelta(0.), datetime.timedelta(0.), datetime.timedelta(0.), datetime.timedelta(days = int((year-2022)*365.25))]
 
             emulsion_runs_number.append(emulsion_run["emulsion_run_number"])
-            emulsion_runs_delivered.append(integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date), year_mask[year]), emulsion_axes_inst , emulsion_axes_int, date_offset = emulsion_offsets, label = "Emulsion run {0}".format(i_emulsion_run), color = this_color, linewidth = 1))
+            emulsion_runs_delivered.append(integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date), year_mask[year]), emulsion_axes_inst , emulsion_axes_int, date_offset = emulsion_offsets, label = "DAQ run period {0}".format(emulsion_runs_number[i_emulsion_run]), color = this_color, linewidth = 1))
             emulsion_runs_recorded.append(integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(~dead_time, np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date)), year_mask[year]), emulsion_axes_inst, emulsion_axes_int, date_offset = emulsion_offsets, label = None, color = this_color, linestyle = "--", linewidth = 1))
         
             ax_integrated_emulsion.grid(alpha = 0.3)
@@ -407,7 +407,7 @@ html.append("<th colspan=\"4\">Integrated luminosity [fb<sup>-1</sup>]</th>")
 html.append("<th colspan=\"2\">Plots</th>")
 html.append("</tr>")
 html.append("<tr>")
-html.append("<th>Emulsion run</th>")
+html.append("<th>DAQ run period</th>")
 html.append("<th>Delivered</th>")
 html.append("<th>Recorded</th>")
 html.append("<th>From</th>")
