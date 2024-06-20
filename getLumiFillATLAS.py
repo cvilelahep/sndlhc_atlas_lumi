@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='Get luminosity from ATLAS and save
 
 parser.add_argument("-o", "--output_dir", type = str, help="Directory to store the ROOT files", required=True)
 parser.add_argument("--atlas_dir", type = str, help = "Directory with ATLAS luminosity", default = "/eos/project/a/atlas-datasummary/public/lumifiles/{}/lumi/")
-parser.add_argument("--raw_data_dirs", type = str, help="Directories with SND@LHC raw data", default="/eos/experiment/sndlhc/raw_data/physics/2022/,/eos/experiment/sndlhc/raw_data/physics/2023_reprocess_24/,/eos/experiment/sndlhc/raw_data/physics/2024/run_241/,/eos/experiment/sndlhc/raw_data/physics/2024/run_242/,/eos/experiment/sndlhc/raw_data/physics/2024/run_243/")
+parser.add_argument("--raw_data_dirs", type = str, help="Directories with SND@LHC raw data", default="/eos/experiment/sndlhc/raw_data/physics/2022/,/eos/experiment/sndlhc/raw_data/physics/2023_reprocess_24/,/eos/experiment/sndlhc/raw_data/physics/2024/run_241/,/eos/experiment/sndlhc/raw_data/physics/2024/run_242/,/eos/experiment/sndlhc/raw_data/physics/2024/run_243/,/eos/experiment/sndlhc/raw_data/physics/2024/run_244/")
 
 
 args = parser.parse_args()

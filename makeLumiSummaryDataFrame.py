@@ -281,15 +281,39 @@ for i_year, year in enumerate(year_mask.keys()) :
     
     # Plot delivered and recorded lumi separately for each emulsion run
     for i_emulsion_run, emulsion_run in enumerate(emulsion_runs) :
-        
-#        this_color = plt.rcParams['axes.prop_cycle'].by_key()['color'][i_emulsion_run % len(plt.rcParams['axes.prop_cycle'].by_key()['color'])]
         this_color = emulsion_dash_palette[i_emulsion_run % len(emulsion_dash_palette)]
+        
+        fig_instantaneous_emulsion, ax_instantaneous_emulsion = plt.subplots(figsize = (10, 5))
+        fig_integrated_emulsion, ax_integrated_emulsion = plt.subplots(figsize = (10, 5))
+        
+        emulsion_axes_inst = [ax_instantaneous, ax_instantaneous_year, ax_instantaneous_emulsion, ax_instantaneous_mod]
+        emulsion_axes_int = [ax_integrated, ax_integrated_year, ax_integrated_emulsion, ax_integrated_mod]
+        emulsion_offsets = [datetime.timedelta(0.), datetime.timedelta(0.), datetime.timedelta(0.), datetime.timedelta(days = int((year-2022)*365.25))]
         
         start_date = dp.parse(emulsion_run["start_date"]).timestamp()
         if emulsion_run["end_date"] is None :
             end_date = time_now 
         else :
             end_date = dp.parse(emulsion_run["end_date"]).timestamp()
+
+        if dp.parse(emulsion_run["start_date"]).year != year:
+            continue
+            
+        emulsion_runs_number.append(emulsion_run["emulsion_run_number"])
+        emulsion_runs_delivered.append(integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date), year_mask[year]), emulsion_axes_inst , emulsion_axes_int, date_offset = emulsion_offsets, label = "DAQ run period {0}".format(emulsion_runs_number[i_emulsion_run]), color = this_color, linewidth = 1))
+        emulsion_runs_recorded.append(integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(~dead_time, np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date)), year_mask[year]), emulsion_axes_inst, emulsion_axes_int, date_offset = emulsion_offsets, label = None, color = this_color, linestyle = "--", linewidth = 1))
+
+        ax_integrated_emulsion.grid(alpha = 0.3)
+        ax_instantaneous_emulsion.grid(alpha = 0.3)
+        
+        ax_integrated_emulsion.set_ylabel("Integrated luminosity [fb$^{-1}$]")
+        ax_instantaneous_emulsion.set_ylabel("Instantaneous luminosity [fb$^{-1}$s$^{-1}$]")
+    
+        ax_instantaneous_emulsion.legend()
+        ax_integrated_emulsion.legend()
+    
+        fig_save_and_close(fig_instantaneous_emulsion, "Plots/sndlhc_instantaneous_lumi_emulsion_run_{0}".format(i_emulsion_run))
+        fig_save_and_close(fig_integrated_emulsion, "Plots/sndlhc_integrated_lumi_emulsion_run_{0}".format(i_emulsion_run))
     
         dummy_fig, dummy_ax = plt.subplots(figsize = (10, 5))
         
@@ -298,31 +322,6 @@ for i_year, year in enumerate(year_mask.keys()) :
         dummy_fig.clf()
         plt.close(dummy_fig)
         gc.collect()
-        
-        if this_emu_delivered[0] :
-
-            fig_instantaneous_emulsion, ax_instantaneous_emulsion = plt.subplots(figsize = (10, 5))
-            fig_integrated_emulsion, ax_integrated_emulsion = plt.subplots(figsize = (10, 5))
-
-            emulsion_axes_inst = [ax_instantaneous, ax_instantaneous_year, ax_instantaneous_emulsion, ax_instantaneous_mod]
-            emulsion_axes_int = [ax_integrated, ax_integrated_year, ax_integrated_emulsion, ax_integrated_mod]
-            emulsion_offsets = [datetime.timedelta(0.), datetime.timedelta(0.), datetime.timedelta(0.), datetime.timedelta(days = int((year-2022)*365.25))]
-
-            emulsion_runs_number.append(emulsion_run["emulsion_run_number"])
-            emulsion_runs_delivered.append(integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date), year_mask[year]), emulsion_axes_inst , emulsion_axes_int, date_offset = emulsion_offsets, label = "DAQ run period {0}".format(emulsion_runs_number[i_emulsion_run]), color = this_color, linewidth = 1))
-            emulsion_runs_recorded.append(integrate_and_plot(dataset, lambda x : np.logical_and(np.logical_and(~dead_time, np.logical_and(x["unix_timestamp"] >= start_date, x["unix_timestamp"] < end_date)), year_mask[year]), emulsion_axes_inst, emulsion_axes_int, date_offset = emulsion_offsets, label = None, color = this_color, linestyle = "--", linewidth = 1))
-        
-            ax_integrated_emulsion.grid(alpha = 0.3)
-            ax_instantaneous_emulsion.grid(alpha = 0.3)
-    
-            ax_integrated_emulsion.set_ylabel("Integrated luminosity [fb$^{-1}$]")
-            ax_instantaneous_emulsion.set_ylabel("Instantaneous luminosity [fb$^{-1}$s$^{-1}$]")
-    
-            ax_instantaneous_emulsion.legend()
-            ax_integrated_emulsion.legend()
-    
-            fig_save_and_close(fig_instantaneous_emulsion, "Plots/sndlhc_instantaneous_lumi_emulsion_run_{0}".format(i_emulsion_run))
-            fig_save_and_close(fig_integrated_emulsion, "Plots/sndlhc_integrated_lumi_emulsion_run_{0}".format(i_emulsion_run))
 
     ax_integrated_year.grid(alpha = 0.3)
     ax_instantaneous_year.grid(alpha = 0.3)
