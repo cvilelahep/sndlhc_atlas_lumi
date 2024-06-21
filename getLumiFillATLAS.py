@@ -65,10 +65,14 @@ for year in range(2022, datetime.date.today().year+1) :
         print(fill_number)
 
         with tarfile.open(atlas_lumi_tgz, mode = "r:gz") as atlas_tar :
-            tar_member = atlas_tar.getmember(fill_number+"/"+fill_number+"_lumi_ATLAS.txt")
+            try: 
+                tar_member = atlas_tar.getmember(fill_number+"/"+fill_number+"_lumi_ATLAS.txt")
+            except KeyError:
+                print("WARNING! LUMI FILE NOT FOUND FOR FILL {}".fill_number)
+                continue
             with atlas_tar.extractfile(tar_member) as f :
                 data = np.genfromtxt(f, usecols = (0, 2))
-    
+                
                 unix_timestamps = np.array(data[:,0])
                 lumi = np.array(data[:,1])
 
